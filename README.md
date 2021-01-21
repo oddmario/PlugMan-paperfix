@@ -1,4 +1,5 @@
 <h1 align="center">This is a PlugMan *Fork*.</h1>
+The original PlugMan: https://github.com/r-clancy/PlugMan
 
 # PlugMan
 
@@ -60,32 +61,4 @@ PlugMan is a simple, easy to use plugin that lets server admins manage plugins f
 ## Configuration
 | File | URL |
 | ----- | ------- |
-| config.yml | https://github.com/r-clancy/PlugMan/blob/master/src/main/resources/config.yml |
-
-## Sponsors
-
-<div style="text-align:center" markdown="1">
-
-![image](https://raw.githubusercontent.com/r-clancy/PlugMan/master/images/jetbrains_logo.png "JetBrains")
-
-JetBrains is kindly supporting the PlugMan open source project with it's full-featured Java IDE.
-
-Take a look a JetBrain's leading software products over on <a href="http://www.jetbrains.com/">their website.</a>
-
----
-
-![image](https://raw.githubusercontent.com/r-clancy/PlugMan/master/images/yourkit_logo.png "YourKit")
-
-YourKit is kindly supporting the PlugMan open source project with its full-featured Java Profiler.
-
-YourKit, LLC is the creator of innovative and intelligent tools for profiling Java and .NET applications.
-
-Take a look at YourKit's leading software products: <a href="http://www.yourkit.com/java/profiler/index.jsp">YourKit Java Profiler</a> and <a href="http://www.yourkit.com/.net/profiler/index.jsp">YourKit .NET Profiler</a>.
-
----
-
-![image](https://raw.githubusercontent.com/r-clancy/PlugMan/master/images/intreppid_logo.png "Intreppid Logo")
-
-Intreppid is kindly supporting the PlugMan open source project with hosting for the Jenkins build server along with a test platform for development.
-
-Take a look at Intreppid's premium Minecraft server and dedicated servers on <a href="https://www.intreppid.com/">their website</a>.
+| config.yml | https://github.com/TheBlackEntity/PlugMan/blob/master/src/main/resources/config.yml |
