@@ -1,4 +1,4 @@
-<h1 align="center">PlugMan is no longer actively maintained.</h1>
+<h1 align="center">This is a PlugMan *Fork*.</h1>
 
 # PlugMan
 
