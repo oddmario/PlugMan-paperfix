@@ -31,6 +31,7 @@ import com.google.common.base.Joiner;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.net.CookieManager;
 import java.net.URLClassLoader;
 import java.util.*;
 import java.util.logging.Level;
@@ -216,69 +217,12 @@ public class PluginUtil {
 
         for (Plugin plugin : Bukkit.getPluginManager().getPlugins()) {
 
-            // Map of commands and their attributes.
-            Map<String, Map<String, Object>> commands = plugin.getDescription().getCommands();
+            Command cmd = Bukkit.getServer().getPluginCommand(plugin.getName().toLowerCase() + ":" + command.toLowerCase());
+            if (cmd == null) continue;
 
-            if (commands != null) {
-
-                // Iterator for all the plugin's commands.
-                Iterator<Map.Entry<String, Map<String, Object>>> commandIterator = commands.entrySet().iterator();
-
-                while (commandIterator.hasNext()) {
-
-                    // Current value.
-                    Map.Entry<String, Map<String, Object>> commandNext = commandIterator.next();
-
-                    // Plugin name matches - return.
-                    if (commandNext.getKey().equalsIgnoreCase(command)) {
-                        plugins.add(plugin.getName());
-                        continue;
-                    }
-
-                    // No match - let's iterate over the attributes and see if
-                    // it has aliases.
-                    Iterator<Map.Entry<String, Object>> attributeIterator = commandNext.getValue().entrySet().iterator();
-
-                    while (attributeIterator.hasNext()) {
-
-                        // Current value.
-                        Map.Entry<String, Object> attributeNext = attributeIterator.next();
-
-                        // Has an alias attribute.
-                        if (attributeNext.getKey().equals("aliases")) {
-
-                            Object aliases = attributeNext.getValue();
-
-                            if (aliases instanceof String) {
-                                if (((String) aliases).equalsIgnoreCase(command)) {
-                                    plugins.add(plugin.getName());
-                                    continue;
-                                }
-                            } else {
-
-                                // Cast to a List of Strings.
-                                List<String> array = (List<String>) aliases;
-
-                                // Check for matches here.
-                                for (String str : array) {
-                                    if (str.equalsIgnoreCase(command)) {
-                                        plugins.add(plugin.getName());
-                                        continue;
-                                    }
-                                }
-
-                            }
-
-                        }
-
-                    }
-                }
-
-            }
-
+            plugins.add(plugin.getName());
         }
 
-        // No matches.
         return plugins;
 
     }
