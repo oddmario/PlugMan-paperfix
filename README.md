@@ -1,5 +1,6 @@
-<h1 align="center">This is a PlugMan *Fork*.</h1>
+<h1 align="center">This is a PlugMan *Fork*.
 The original PlugMan: https://github.com/r-clancy/PlugMan
+</h1>
 
 # PlugMan
 
