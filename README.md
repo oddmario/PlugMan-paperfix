@@ -65,9 +65,9 @@ PlugMan is a simple, easy to use plugin that lets server admins manage plugins f
 
 ## Developers
 To use PlugMan in a plugin, you can use maven:
-<code>
+<addr>
    
-   <repositories>
+   \<repositories>
         <!-- PlugMan -->
         <repository>
             <id>PlugMan</id>
@@ -83,4 +83,4 @@ To use PlugMan in a plugin, you can use maven:
             <scope>provided</scope>
         </dependency>
     </dependencies>
-</code>
+</addr>
