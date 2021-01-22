@@ -62,3 +62,24 @@ PlugMan is a simple, easy to use plugin that lets server admins manage plugins f
 | File | URL |
 | ----- | ------- |
 | config.yml | https://github.com/TheBlackEntity/PlugMan/blob/master/src/main/resources/config.yml |
+
+## Developers
+To use PlugMan in a plugin, you can use maven:
+<addr>
+   <repositories>
+        <!-- PlugMan -->
+        <repository>
+            <id>PlugMan</id>
+            <url>https://raw.githubusercontent.com/TheBlackEntity/PlugMan/repository/</url>
+        </repository>
+    </repositories>
+    
+    <dependencies>
+        <dependency>
+            <groupId>com.rylinaux</groupId>
+            <artifactId>PlugMan</artifactId>
+            <version>2.1.9</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</addr>
