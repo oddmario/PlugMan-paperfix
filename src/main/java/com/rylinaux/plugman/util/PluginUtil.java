@@ -12,10 +12,10 @@ package com.rylinaux.plugman.util;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -27,24 +27,25 @@ package com.rylinaux.plugman.util;
  */
 
 import com.google.common.base.Joiner;
-
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.net.CookieManager;
-import java.net.URLClassLoader;
-import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import com.rylinaux.plugman.PlugMan;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.command.PluginIdentifiableCommand;
 import org.bukkit.command.SimpleCommandMap;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.plugin.*;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.net.URLClassLoader;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Utilities for managing plugins.
@@ -59,20 +60,14 @@ public class PluginUtil {
      * @param plugin the plugin to enable
      */
     public static void enable(Plugin plugin) {
-        if (plugin != null && !plugin.isEnabled()) {
-            Bukkit.getPluginManager().enablePlugin(plugin);
-        }
+        if (plugin != null && !plugin.isEnabled()) Bukkit.getPluginManager().enablePlugin(plugin);
     }
 
     /**
      * Enable all plugins.
      */
     public static void enableAll() {
-        for (Plugin plugin : Bukkit.getPluginManager().getPlugins()) {
-            if (!isIgnored(plugin)) {
-                enable(plugin);
-            }
-        }
+        for (Plugin plugin : Bukkit.getPluginManager().getPlugins()) if (!isIgnored(plugin)) enable(plugin);
     }
 
     /**
@@ -81,20 +76,14 @@ public class PluginUtil {
      * @param plugin the plugin to disable
      */
     public static void disable(Plugin plugin) {
-        if (plugin != null && plugin.isEnabled()) {
-            Bukkit.getPluginManager().disablePlugin(plugin);
-        }
+        if (plugin != null && plugin.isEnabled()) Bukkit.getPluginManager().disablePlugin(plugin);
     }
 
     /**
      * Disable all plugins.
      */
     public static void disableAll() {
-        for (Plugin plugin : Bukkit.getPluginManager().getPlugins()) {
-            if (!isIgnored(plugin)) {
-                disable(plugin);
-            }
-        }
+        for (Plugin plugin : Bukkit.getPluginManager().getPlugins()) if (!isIgnored(plugin)) disable(plugin);
     }
 
     /**
@@ -117,9 +106,7 @@ public class PluginUtil {
     public static String getFormattedName(Plugin plugin, boolean includeVersions) {
         ChatColor color = plugin.isEnabled() ? ChatColor.GREEN : ChatColor.RED;
         String pluginName = color + plugin.getName();
-        if (includeVersions) {
-            pluginName += " (" + plugin.getDescription().getVersion() + ")";
-        }
+        if (includeVersions) pluginName += " (" + plugin.getDescription().getVersion() + ")";
         return pluginName;
     }
 
@@ -141,11 +128,8 @@ public class PluginUtil {
      * @return the plugin
      */
     public static Plugin getPluginByName(String name) {
-        for (Plugin plugin : Bukkit.getPluginManager().getPlugins()) {
-            if (name.equalsIgnoreCase(plugin.getName())) {
-                return plugin;
-            }
-        }
+        for (Plugin plugin : Bukkit.getPluginManager().getPlugins())
+            if (name.equalsIgnoreCase(plugin.getName())) return plugin;
         return null;
     }
 
@@ -156,9 +140,8 @@ public class PluginUtil {
      */
     public static List<String> getPluginNames(boolean fullName) {
         List<String> plugins = new ArrayList<>();
-        for (Plugin plugin : Bukkit.getPluginManager().getPlugins()) {
+        for (Plugin plugin : Bukkit.getPluginManager().getPlugins())
             plugins.add(fullName ? plugin.getDescription().getFullName() : plugin.getName());
-        }
         return plugins;
     }
 
@@ -170,9 +153,7 @@ public class PluginUtil {
      */
     public static String getPluginVersion(String name) {
         Plugin plugin = getPluginByName(name);
-        if (plugin != null && plugin.getDescription() != null) {
-            return plugin.getDescription().getVersion();
-        }
+        if (plugin != null && plugin.getDescription() != null) return plugin.getDescription().getVersion();
         return null;
     }
 
@@ -192,9 +173,7 @@ public class PluginUtil {
             Iterator commandsIt = commands.entrySet().iterator();
             while (commandsIt.hasNext()) {
                 Map.Entry thisEntry = (Map.Entry) commandsIt.next();
-                if (thisEntry != null) {
-                    parsedCommands.add((String) thisEntry.getKey());
-                }
+                if (thisEntry != null) parsedCommands.add((String) thisEntry.getKey());
             }
         }
 
@@ -244,11 +223,7 @@ public class PluginUtil {
      * @return whether the plugin is ignored
      */
     public static boolean isIgnored(String plugin) {
-        for (String name : PlugMan.getInstance().getIgnoredPlugins()) {
-            if (name.equalsIgnoreCase(plugin)) {
-                return true;
-            }
-        }
+        for (String name : PlugMan.getInstance().getIgnoredPlugins()) if (name.equalsIgnoreCase(plugin)) return true;
         return false;
     }
 
@@ -274,27 +249,21 @@ public class PluginUtil {
 
         File pluginDir = new File("plugins");
 
-        if (!pluginDir.isDirectory()) {
+        if (!pluginDir.isDirectory())
             return PlugMan.getInstance().getMessageFormatter().format("load.plugin-directory");
-        }
 
         File pluginFile = new File(pluginDir, name + ".jar");
 
-        if (!pluginFile.isFile()) {
-            for (File f : pluginDir.listFiles()) {
-                if (f.getName().endsWith(".jar")) {
-                    try {
-                        PluginDescriptionFile desc = PlugMan.getInstance().getPluginLoader().getPluginDescription(f);
-                        if (desc.getName().equalsIgnoreCase(name)) {
-                            pluginFile = f;
-                            break;
-                        }
-                    } catch (InvalidDescriptionException e) {
-                        return PlugMan.getInstance().getMessageFormatter().format("load.cannot-find");
-                    }
+        if (!pluginFile.isFile()) for (File f : pluginDir.listFiles())
+            if (f.getName().endsWith(".jar")) try {
+                PluginDescriptionFile desc = PlugMan.getInstance().getPluginLoader().getPluginDescription(f);
+                if (desc.getName().equalsIgnoreCase(name)) {
+                    pluginFile = f;
+                    break;
                 }
+            } catch (InvalidDescriptionException e) {
+                return PlugMan.getInstance().getMessageFormatter().format("load.cannot-find");
             }
-        }
 
         try {
             target = Bukkit.getPluginManager().loadPlugin(pluginFile);
@@ -309,9 +278,82 @@ public class PluginUtil {
         target.onLoad();
         Bukkit.getPluginManager().enablePlugin(target);
 
+        if (!(PlugMan.getInstance().getBukkitCommandWrap() instanceof BukkitCommandWrap_Useless)) {
+            Plugin finalTarget = target;
+            Bukkit.getScheduler().runTaskLater(PlugMan.getInstance(), () -> {
+                Map<String, Command> knownCommands = getKnownCommands();
+
+                for (Map.Entry<String, Command> entry : knownCommands.entrySet().stream().filter(stringCommandEntry -> stringCommandEntry.getValue() instanceof PluginIdentifiableCommand).filter(stringCommandEntry -> {
+                    PluginIdentifiableCommand command = (PluginIdentifiableCommand) stringCommandEntry.getValue();
+                    return command.getPlugin().getName().equalsIgnoreCase(finalTarget.getName());
+                }).collect(Collectors.toList())) {
+                    String alias = entry.getKey();
+                    Command command = entry.getValue();
+                    PlugMan.getInstance().getBukkitCommandWrap().wrap(command, alias);
+                }
+
+                if (Bukkit.getOnlinePlayers().size() >= 1)
+                    for (Player player : Bukkit.getOnlinePlayers()) player.updateCommands();
+            }, 10L);
+        }
+
         return PlugMan.getInstance().getMessageFormatter().format("load.loaded", target.getName());
 
     }
+
+
+    private static Field commandMapField;
+    private static Field knownCommandsField;
+
+    public static Map<String, Command> getKnownCommands() {
+        if (commandMapField == null) try {
+            commandMapField = Class.forName("org.bukkit.craftbukkit." + getNmsVersion() + ".CraftServer").getDeclaredField("commandMap");
+            commandMapField.setAccessible(true);
+        } catch (NoSuchFieldException | ClassNotFoundException e) {
+            e.printStackTrace();
+            return null;
+        }
+        SimpleCommandMap commandMap;
+        try {
+            commandMap = (SimpleCommandMap) commandMapField.get(Bukkit.getServer());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        if (knownCommandsField == null) try {
+            knownCommandsField = SimpleCommandMap.class.getDeclaredField("knownCommands");
+            knownCommandsField.setAccessible(true);
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        Map<String, Command> knownCommands;
+
+        try {
+            knownCommands = (Map<String, Command>) knownCommandsField.get(commandMap);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        return knownCommands;
+    }
+
+
+    private static String nmsVersion = null;
+
+    private static String getNmsVersion() {
+        if (nmsVersion == null) try {
+            nmsVersion = Bukkit.getServer().getClass().getPackage().getName().replace(".", ",").split(",")[3];
+        } catch (ArrayIndexOutOfBoundsException e) {
+            e.printStackTrace();
+            nmsVersion = null;
+        }
+        return nmsVersion;
+    }
+
 
     /**
      * Reload a plugin.
@@ -329,11 +371,7 @@ public class PluginUtil {
      * Reload all plugins.
      */
     public static void reloadAll() {
-        for (Plugin plugin : Bukkit.getPluginManager().getPlugins()) {
-            if (!isIgnored(plugin)) {
-                reload(plugin);
-            }
-        }
+        for (Plugin plugin : Bukkit.getPluginManager().getPlugins()) if (!isIgnored(plugin)) reload(plugin);
     }
 
     /**
@@ -343,6 +381,21 @@ public class PluginUtil {
      * @return the message to send to the user.
      */
     public static String unload(Plugin plugin) {
+
+        if (!(PlugMan.getInstance().getBukkitCommandWrap() instanceof BukkitCommandWrap_Useless)) {
+            Map<String, Command> knownCommands = getKnownCommands();
+
+            for (Map.Entry<String, Command> entry : knownCommands.entrySet().stream().filter(stringCommandEntry -> stringCommandEntry.getValue() instanceof PluginIdentifiableCommand).filter(stringCommandEntry -> {
+                PluginIdentifiableCommand command = (PluginIdentifiableCommand) stringCommandEntry.getValue();
+                return command.getPlugin().getName().equalsIgnoreCase(plugin.getName());
+            }).collect(Collectors.toList())) {
+                String alias = entry.getKey();
+                PlugMan.getInstance().getBukkitCommandWrap().unwrap(alias);
+            }
+
+            if (Bukkit.getOnlinePlayers().size() >= 1)
+                for (Player player : Bukkit.getOnlinePlayers()) player.updateCommands();
+        }
 
         String name = plugin.getName();
 
@@ -406,18 +459,13 @@ public class PluginUtil {
         if (names != null && names.containsKey(name))
             names.remove(name);
 
-        if (listeners != null && reloadlisteners) {
-            for (SortedSet<RegisteredListener> set : listeners.values()) {
-                for (Iterator<RegisteredListener> it = set.iterator(); it.hasNext(); ) {
-                    RegisteredListener value = it.next();
-                    if (value.getPlugin() == plugin) {
-                        it.remove();
-                    }
-                }
+        if (listeners != null && reloadlisteners) for (SortedSet<RegisteredListener> set : listeners.values())
+            for (Iterator<RegisteredListener> it = set.iterator(); it.hasNext(); ) {
+                RegisteredListener value = it.next();
+                if (value.getPlugin() == plugin) it.remove();
             }
-        }
 
-        if (commandMap != null) {
+        if (commandMap != null)
             for (Iterator<Map.Entry<String, Command>> it = commands.entrySet().iterator(); it.hasNext(); ) {
                 Map.Entry<String, Command> entry = it.next();
                 if (entry.getValue() instanceof PluginCommand) {
@@ -428,7 +476,6 @@ public class PluginUtil {
                     }
                 }
             }
-        }
 
         // Attempt to close the classloader to unlock any handles on the plugin's jar file.
         ClassLoader cl = plugin.getClass().getClassLoader();
@@ -465,5 +512,4 @@ public class PluginUtil {
         return PlugMan.getInstance().getMessageFormatter().format("unload.unloaded", name);
 
     }
-
 }

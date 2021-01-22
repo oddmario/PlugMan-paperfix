@@ -27,10 +27,12 @@ package com.rylinaux.plugman;
  */
 
 import com.rylinaux.plugman.messaging.MessageFormatter;
+import com.rylinaux.plugman.util.BukkitCommandWrap;
+import com.rylinaux.plugman.util.BukkitCommandWrap_Useless;
+import org.bukkit.Bukkit;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.List;
-
-import org.bukkit.plugin.java.JavaPlugin;
 
 /**
  * Plugin manager for Bukkit servers.
@@ -38,6 +40,11 @@ import org.bukkit.plugin.java.JavaPlugin;
  * @author rylinaux
  */
 public class PlugMan extends JavaPlugin {
+
+    /**
+     * The command manager which adds all command we want so 1.13+ players can instantly tab-complete them
+     */
+    private BukkitCommandWrap bukkitCommandWrap = null;
 
     /**
      * The instance of the plugin
@@ -66,6 +73,19 @@ public class PlugMan extends JavaPlugin {
 
         initConfig();
 
+        String version;
+        try {
+            version = Bukkit.getServer().getClass().getPackage().getName().replace(".", ",").split(",")[3].replace("_", ".");
+        } catch (ArrayIndexOutOfBoundsException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        if (version.contains("1.17") || version.contains("1.16") || version.contains("1.15") || version.contains("1.14") || version.contains("1.13")) {
+            bukkitCommandWrap = new BukkitCommandWrap();
+        } else {
+            bukkitCommandWrap = new BukkitCommandWrap_Useless();
+        }
     }
 
     @Override
@@ -110,4 +130,12 @@ public class PlugMan extends JavaPlugin {
         return messageFormatter;
     }
 
+    /**
+     * Returns the command manager.
+     *
+     * @return the command manager
+     */
+    public BukkitCommandWrap getBukkitCommandWrap() {
+        return bukkitCommandWrap;
+    }
 }
