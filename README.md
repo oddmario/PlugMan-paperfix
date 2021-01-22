@@ -69,7 +69,7 @@ To use PlugMan in a plugin, you can use maven:
    
    \<repositories>
         <!-- PlugMan -->
-        <repository>
+        \<repository>
             <id>PlugMan</id>
             <url>https://raw.githubusercontent.com/TheBlackEntity/PlugMan/repository/</url>
         </repository>
