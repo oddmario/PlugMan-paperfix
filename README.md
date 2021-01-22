@@ -64,11 +64,9 @@ PlugMan is a simple, easy to use plugin that lets server admins manage plugins f
 | config.yml | https://github.com/TheBlackEntity/PlugMan/blob/master/src/main/resources/config.yml |
 
 ## Developers
-To use PlugMan in a plugin, you can use maven:
-<addr>
-   
-   \<repositories>
-        
+How to include PlugMan with Maven:
+```xml
+   <repositories>
         <!-- PlugMan -->
         <repository>
             <id>PlugMan</id>
@@ -84,4 +82,4 @@ To use PlugMan in a plugin, you can use maven:
             <scope>provided</scope>
         </dependency>
     </dependencies>
-</addr>
+```
