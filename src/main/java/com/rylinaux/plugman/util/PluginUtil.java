@@ -146,6 +146,33 @@ public class PluginUtil {
     }
 
     /**
+     * Returns a List of disabled plugin names.
+     *
+     * @return list of disabled plugin names
+     */
+    public static List<String> getDisabledPluginNames(boolean fullName) {
+        List<String> plugins = new ArrayList<>();
+        for (Plugin plugin : Bukkit.getPluginManager().getPlugins())
+            if (!plugin.isEnabled())
+                plugins.add(fullName ? plugin.getDescription().getFullName() : plugin.getName());
+        return plugins;
+    }
+
+
+    /**
+     * Returns a List of enabled plugin names.
+     *
+     * @return list of enabled plugin names
+     */
+    public static List<String> getEnabledPluginNames(boolean fullName) {
+        List<String> plugins = new ArrayList<>();
+        for (Plugin plugin : Bukkit.getPluginManager().getPlugins())
+            if (plugin.isEnabled())
+                plugins.add(fullName ? plugin.getDescription().getFullName() : plugin.getName());
+        return plugins;
+    }
+
+    /**
      * Get the version of another plugin.
      *
      * @param name the name of the other plugin.
@@ -193,7 +220,7 @@ public class PluginUtil {
     public static List<String> findByCommand(String command) {
         List<String> plugins = new ArrayList<>();
 
-        Map<String, Command> knownCommands = getKnownCommands();
+        /*Map<String, Command> knownCommands = getKnownCommands();
 
         List<Command> commands = knownCommands.values().stream().filter(command11 -> command11 instanceof PluginIdentifiableCommand).filter(command11 -> command11.getName().equalsIgnoreCase(command)).collect(Collectors.toList());
 
@@ -201,6 +228,24 @@ public class PluginUtil {
             PluginIdentifiableCommand cmd = (PluginIdentifiableCommand) command1;
             if (!plugins.contains(cmd.getPlugin().getName()))
                 plugins.add(cmd.getPlugin().getName());
+        }*/
+
+        List<String> pls = new ArrayList<>();
+        for (String s : getKnownCommands().keySet()) {
+            if (s.contains(":")) {
+                if (!s.equalsIgnoreCase("minecraft:/")) {
+                    if (s.split(":")[1].equalsIgnoreCase(command)) {
+                        String substring = s.substring(0, s.lastIndexOf(":"));
+                        pls.add(substring);
+                    }
+                }
+            }
+        }
+
+        for (String plugin : pls) {
+            Plugin pl = Bukkit.getPluginManager().getPlugin(plugin);
+            if (pl != null) plugins.add(pl.getName());
+            else plugins.add(plugin);
         }
 
         return plugins;

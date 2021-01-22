@@ -29,10 +29,8 @@ package com.rylinaux.plugman.command;
 import com.google.common.base.Joiner;
 import com.rylinaux.plugman.PlugMan;
 import com.rylinaux.plugman.util.PluginUtil;
-
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.plugin.Plugin;
 
 import java.util.List;
 
@@ -100,10 +98,6 @@ public class LookupCommand extends AbstractCommand {
         }
 
         String commandName = args[1];
-
-        if (commandName.charAt(0) == '/') {
-            commandName = commandName.substring(1, commandName.length());
-        }
 
         List<String> plugins = PluginUtil.findByCommand(commandName);
 
