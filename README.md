@@ -67,10 +67,10 @@ PlugMan is a simple, easy to use plugin that lets server admins manage plugins f
 To use PlugMan in a plugin, you can use maven:
 <addr>
    
-   <repositories>
+   \<repositories>
         
         <!-- PlugMan -->
-        \<repository>
+        <repository>
             <id>PlugMan</id>
             <url>https://raw.githubusercontent.com/TheBlackEntity/PlugMan/repository/</url>
         </repository>
