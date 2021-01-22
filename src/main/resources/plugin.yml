@@ -1,8 +1,8 @@
 name: PlugMan
 main: com.rylinaux.plugman.PlugMan
-version: 2.1.7
+version: 2.1.8
 description: Plugin manager for Bukkit servers
-author: rylinaux
+authors: [rylinaux, Entity303]
 api-version: 1.13
 commands:
   plugman:
