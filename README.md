@@ -83,3 +83,15 @@ How to include PlugMan with Maven:
         </dependency>
     </dependencies>
 ```
+How to include PlugMan with Gradle:
+```groovy
+repositories {
+    maven {
+        name = 'PlugMan'
+        url = 'https://raw.githubusercontent.com/TheBlackEntity/PlugMan/repository/'
+    }
+}
+dependencies {
+    compileOnly 'com.rylinaux:PlugMan:2.1.9'
+}
+```
