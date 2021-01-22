@@ -191,15 +191,16 @@ public class PluginUtil {
      * @return the plugin.
      */
     public static List<String> findByCommand(String command) {
-
         List<String> plugins = new ArrayList<>();
 
-        for (Plugin plugin : Bukkit.getPluginManager().getPlugins()) {
+        Map<String, Command> knownCommands = getKnownCommands();
 
-            Command cmd = Bukkit.getServer().getPluginCommand(plugin.getName().toLowerCase() + ":" + command.toLowerCase());
-            if (cmd == null) continue;
+        List<Command> commands = knownCommands.values().stream().filter(command11 -> command11 instanceof PluginIdentifiableCommand).filter(command11 -> command11.getName().equalsIgnoreCase(command)).collect(Collectors.toList());
 
-            plugins.add(plugin.getName());
+        for (Command command1 : commands) {
+            PluginIdentifiableCommand cmd = (PluginIdentifiableCommand) command1;
+            if (!plugins.contains(cmd.getPlugin().getName()))
+                plugins.add(cmd.getPlugin().getName());
         }
 
         return plugins;
