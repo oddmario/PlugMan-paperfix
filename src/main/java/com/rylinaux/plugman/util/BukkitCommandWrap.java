@@ -114,16 +114,6 @@ public class BukkitCommandWrap {
         } catch (IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
         }
-
-        /*CraftServer craftServer = (CraftServer) Bukkit.getServer();
-        MinecraftServer server = MinecraftServer.getServer();
-
-        BukkitCommandWrapper wrapper = new BukkitCommandWrapper(craftServer, command);
-        CommandDispatcher commanddispatcher = server.getCommandDispatcher();
-
-        com.mojang.brigadier.CommandDispatcher<CommandListenerWrapper> b = commanddispatcher.a();
-
-        wrapper.register(b, alias);*/
     }
 
     Field bField;
