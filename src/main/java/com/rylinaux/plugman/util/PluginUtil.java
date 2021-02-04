@@ -191,7 +191,6 @@ public class PluginUtil {
      * @return the commands registered
      */
     public static String getUsages(Plugin plugin) {
-
         List<String> parsedCommands = getKnownCommands().keySet().stream().filter(s -> s.toLowerCase().startsWith(plugin.getName().toLowerCase() + ":")).map(s -> s.substring(plugin.getName().length() + ":".length())).collect(Collectors.toList());
 
         if (parsedCommands.isEmpty())
