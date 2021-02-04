@@ -209,16 +209,6 @@ public class PluginUtil {
     public static List<String> findByCommand(String command) {
         List<String> plugins = new ArrayList<>();
 
-        /*Map<String, Command> knownCommands = getKnownCommands();
-
-        List<Command> commands = knownCommands.values().stream().filter(command11 -> command11 instanceof PluginIdentifiableCommand).filter(command11 -> command11.getName().equalsIgnoreCase(command)).collect(Collectors.toList());
-
-        for (Command command1 : commands) {
-            PluginIdentifiableCommand cmd = (PluginIdentifiableCommand) command1;
-            if (!plugins.contains(cmd.getPlugin().getName()))
-                plugins.add(cmd.getPlugin().getName());
-        }*/
-
         List<String> pls = new ArrayList<>();
         for (String s : getKnownCommands().keySet()) {
             if (s.contains(":")) {
