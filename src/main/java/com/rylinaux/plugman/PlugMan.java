@@ -80,15 +80,16 @@ public class PlugMan extends JavaPlugin {
 
         String version;
         try {
-            version = Bukkit.getServer().getClass().getPackage().getName().replace(".", ",").split(",")[3].replace("_", ".");
+            version = Bukkit.getServer().getClass().getPackage().getName().replace(".", ",").split(",")[3];
         } catch (ArrayIndexOutOfBoundsException e) {
             e.printStackTrace();
             return;
         }
 
-        if (version.contains("1.17") || version.contains("1.16") || version.contains("1.15") || version.contains("1.14") || version.contains("1.13")) {
+        try {
+            Class.forName("org.bukkit.craftbukkit." + version + ".command.BukkitCommandWrapper");
             bukkitCommandWrap = new BukkitCommandWrap();
-        } else {
+        } catch (Exception ignored) {
             bukkitCommandWrap = new BukkitCommandWrap_Useless();
         }
     }
