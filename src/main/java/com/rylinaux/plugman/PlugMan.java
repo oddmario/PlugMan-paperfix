@@ -32,6 +32,7 @@ import com.rylinaux.plugman.util.BukkitCommandWrap_Useless;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -65,6 +66,10 @@ public class PlugMan extends JavaPlugin {
     public void onEnable() {
 
         instance = this;
+
+        if (!new File("plugins" + File.separator + "PlugMan", "messages.yml").exists()) {
+            saveResource("messages.yml", true);
+        }
 
         messageFormatter = new MessageFormatter();
 
