@@ -192,17 +192,7 @@ public class PluginUtil {
      */
     public static String getUsages(Plugin plugin) {
 
-        List<String> parsedCommands = new ArrayList<>();
-
-        Map commands = plugin.getDescription().getCommands();
-
-        if (commands != null) {
-            Iterator commandsIt = commands.entrySet().iterator();
-            while (commandsIt.hasNext()) {
-                Map.Entry thisEntry = (Map.Entry) commandsIt.next();
-                if (thisEntry != null) parsedCommands.add((String) thisEntry.getKey());
-            }
-        }
+        List<String> parsedCommands = getKnownCommands().keySet().stream().filter(s -> s.toLowerCase().startsWith(plugin.getName().toLowerCase() + ":")).map(s -> s.substring(plugin.getName().length() + ":".length())).collect(Collectors.toList());
 
         if (parsedCommands.isEmpty())
             return "No commands registered.";
