@@ -71,39 +71,49 @@ public class PlugManTabCompleter implements TabCompleter {
             if (args.length == 2) if (args[0].equalsIgnoreCase("load")) {
                 List<String> files = new ArrayList<>();
                 String partialPlugin = args[1];
+
                 for (File pluginFile : new File("plugins").listFiles()) {
-                    if (pluginFile.isDirectory()) continue;
-
-                    if (!pluginFile.getName().toLowerCase().endsWith(".jar"))
-                        if (!new File("plugins", pluginFile.getName() + ".jar").exists()) continue;
-
-                    JarFile jarFile = null;
                     try {
-                        jarFile = new JarFile(pluginFile);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        continue;
-                    }
-                    InputStream stream;
-                    try {
-                        stream = jarFile.getInputStream(jarFile.getEntry("plugin.yml"));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        continue;
-                    }
-                    PluginDescriptionFile descriptionFile = null;
-                    try {
-                        descriptionFile = new PluginDescriptionFile(stream);
-                    } catch (InvalidDescriptionException e) {
-                        e.printStackTrace();
-                        continue;
-                    }
+                        if (pluginFile.isDirectory()) continue;
 
-                    files.add(pluginFile.getName().substring(0, pluginFile.getName().length() - ".jar".length()));
+                        if (!pluginFile.getName().toLowerCase().endsWith(".jar"))
+                            if (!new File("plugins", pluginFile.getName() + ".jar").exists()) continue;
 
-                    for (Plugin plugin : Bukkit.getPluginManager().getPlugins())
-                        if (plugin.getName().equalsIgnoreCase(descriptionFile.getName()))
-                            files.remove(pluginFile.getName().substring(0, pluginFile.getName().length() - ".jar".length()));
+                        JarFile jarFile = null;
+                        try {
+                            jarFile = new JarFile(pluginFile);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            continue;
+                        }
+
+                        if (jarFile.getEntry("plugin.yml") == null) continue;
+
+                        InputStream stream;
+                        try {
+                            stream = jarFile.getInputStream(jarFile.getEntry("plugin.yml"));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            continue;
+                        }
+
+                        if (stream == null) continue;
+
+                        PluginDescriptionFile descriptionFile = null;
+                        try {
+                            descriptionFile = new PluginDescriptionFile(stream);
+                        } catch (InvalidDescriptionException e) {
+                            e.printStackTrace();
+                            continue;
+                        }
+
+                        files.add(pluginFile.getName().substring(0, pluginFile.getName().length() - ".jar".length()));
+
+                        for (Plugin plugin : Bukkit.getPluginManager().getPlugins())
+                            if (plugin.getName().equalsIgnoreCase(descriptionFile.getName()))
+                                files.remove(pluginFile.getName().substring(0, pluginFile.getName().length() - ".jar".length()));
+                    } catch (Exception ignored) {
+                    }
                 }
 
                 StringUtil.copyPartialMatches(partialPlugin, files, completions);
