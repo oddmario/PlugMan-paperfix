@@ -1,0 +1,3 @@
+name: PlugManBungee
+version: ${project.version}
+main: me.entity303.plugmanbungee.main.PlugManBungee
