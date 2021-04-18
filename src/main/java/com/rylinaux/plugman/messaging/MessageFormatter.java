@@ -28,6 +28,8 @@ package com.rylinaux.plugman.messaging;
 
 import org.bukkit.ChatColor;
 
+import java.io.File;
+
 /**
  * Manages custom messages.
  *
@@ -44,7 +46,7 @@ public class MessageFormatter {
      * Construct our object.
      */
     public MessageFormatter() {
-        this.messageFile = new MessageFile("messages.yml");
+        this.messageFile = new MessageFile(new File("plugins" + File.separator + "PlugMan", "messages.yml"));
     }
 
     /**

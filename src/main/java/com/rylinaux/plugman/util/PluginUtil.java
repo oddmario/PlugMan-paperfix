@@ -191,18 +191,7 @@ public class PluginUtil {
      * @return the commands registered
      */
     public static String getUsages(Plugin plugin) {
-
-        List<String> parsedCommands = new ArrayList<>();
-
-        Map commands = plugin.getDescription().getCommands();
-
-        if (commands != null) {
-            Iterator commandsIt = commands.entrySet().iterator();
-            while (commandsIt.hasNext()) {
-                Map.Entry thisEntry = (Map.Entry) commandsIt.next();
-                if (thisEntry != null) parsedCommands.add((String) thisEntry.getKey());
-            }
-        }
+        List<String> parsedCommands = getKnownCommands().keySet().stream().filter(s -> s.toLowerCase().startsWith(plugin.getName().toLowerCase() + ":")).map(s -> s.substring(plugin.getName().length() + ":".length())).collect(Collectors.toList());
 
         if (parsedCommands.isEmpty())
             return "No commands registered.";
@@ -219,16 +208,6 @@ public class PluginUtil {
      */
     public static List<String> findByCommand(String command) {
         List<String> plugins = new ArrayList<>();
-
-        /*Map<String, Command> knownCommands = getKnownCommands();
-
-        List<Command> commands = knownCommands.values().stream().filter(command11 -> command11 instanceof PluginIdentifiableCommand).filter(command11 -> command11.getName().equalsIgnoreCase(command)).collect(Collectors.toList());
-
-        for (Command command1 : commands) {
-            PluginIdentifiableCommand cmd = (PluginIdentifiableCommand) command1;
-            if (!plugins.contains(cmd.getPlugin().getName()))
-                plugins.add(cmd.getPlugin().getName());
-        }*/
 
         List<String> pls = new ArrayList<>();
         for (String s : getKnownCommands().keySet()) {

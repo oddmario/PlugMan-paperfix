@@ -26,10 +26,11 @@ package com.rylinaux.plugman.messaging;
  * #L%
  */
 
-import java.io.InputStreamReader;
-
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+
+import java.io.File;
+import java.io.InputStreamReader;
 
 /**
  * Class that allows reading from a YAML file embedded in the JAR.
@@ -50,6 +51,15 @@ public class MessageFile {
      */
     public MessageFile(String name) {
         this.config = YamlConfiguration.loadConfiguration(new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream(name)));
+    }
+
+    /**
+     * Construct the object.
+     *
+     * @param file the file.
+     */
+    public MessageFile(File file) {
+        this.config = YamlConfiguration.loadConfiguration(file);
     }
 
     /**
