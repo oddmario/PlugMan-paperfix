@@ -69,10 +69,6 @@ public class BungeePluginUtil {
 
         plugin.getExecutorService().shutdownNow();
 
-        /*
-        private final Map<String, Plugin> plugins = new LinkedHashMap<>();
-         */
-
         Field pluginsField = null;
         try {
             pluginsField = PluginManager.class.getDeclaredField("plugins");
