@@ -3,10 +3,8 @@ package me.entity303.plugmanbungee.main;
 import me.entity303.plugmanbungee.commands.PlugManBungeeCommand;
 import me.entity303.plugmanbungee.commands.PluginsCommand;
 import net.md_5.bungee.api.ProxyServer;
-import net.md_5.bungee.api.event.TabCompleteEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
-import net.md_5.bungee.event.EventHandler;
 
 import java.util.concurrent.TimeUnit;
 
@@ -36,10 +34,5 @@ public final class PlugManBungee extends Plugin implements Listener {
 
     public static PlugManBungee getInstance() {
         return instance;
-    }
-
-    @EventHandler
-    public void onTabComplete(TabCompleteEvent e) {
-        System.out.println("Tab:" + e.getCursor());
     }
 }
