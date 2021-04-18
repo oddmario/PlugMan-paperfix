@@ -12,10 +12,10 @@ package com.rylinaux.plugman.command;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -27,21 +27,19 @@ package com.rylinaux.plugman.command;
  */
 
 import com.rylinaux.plugman.PlugMan;
-import com.rylinaux.plugman.util.SpiGetUtil;
+import com.rylinaux.plugman.pojo.UpdateResult;
 import com.rylinaux.plugman.util.FlagUtil;
+import com.rylinaux.plugman.util.UpdateUtil;
 import com.rylinaux.plugman.util.StringUtil;
 import com.rylinaux.plugman.util.ThreadUtil;
-import com.rylinaux.plugman.pojo.UpdateResult;
+import org.bukkit.Bukkit;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Map;
-
-import org.bukkit.Bukkit;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
-import org.bukkit.plugin.Plugin;
 
 /**
  * Command that checks if a plugin is up-to-date.
@@ -94,7 +92,6 @@ public class CheckCommand extends AbstractCommand {
      */
     @Override
     public void execute(final CommandSender sender, final Command command, final String label, final String[] args) {
-
         if (!hasPermission()) {
             sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("error.no-permission"));
             return;
@@ -119,7 +116,7 @@ public class CheckCommand extends AbstractCommand {
                     @Override
                     public void run() {
 
-                        Map<String, UpdateResult> results = SpiGetUtil.checkUpToDate();
+                        Map<String, UpdateResult> results = UpdateUtil.checkUpToDate();
 
                         final StringBuilder upToDate = new StringBuilder(), outOfDate = new StringBuilder(), unknown = new StringBuilder();
 
@@ -158,7 +155,7 @@ public class CheckCommand extends AbstractCommand {
                                 writer.println("Unknown (Installed):");
                                 writer.println(unknown);
 
-                            } catch (IOException e) {
+                            } catch (IOException ignored) {
 
                             } finally {
                                 if (writer != null) {
@@ -203,7 +200,7 @@ public class CheckCommand extends AbstractCommand {
             @Override
             public void run() {
 
-                final UpdateResult result = SpiGetUtil.checkUpToDate(pluginName);
+                final UpdateResult result = UpdateUtil.checkUpToDate(pluginName);
 
                 ThreadUtil.sync(new Runnable() {
 

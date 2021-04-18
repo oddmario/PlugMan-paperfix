@@ -30,9 +30,15 @@ import com.rylinaux.plugman.messaging.MessageFormatter;
 import com.rylinaux.plugman.util.BukkitCommandWrap;
 import com.rylinaux.plugman.util.BukkitCommandWrap_Useless;
 import org.bukkit.Bukkit;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * Plugin manager for Bukkit servers.
@@ -40,6 +46,10 @@ import java.util.List;
  * @author rylinaux
  */
 public class PlugMan extends JavaPlugin {
+    /**
+     * HashMap that contains all mappings from resourcemaps.yml
+     */
+    private final HashMap<String, Map.Entry<Long, Boolean>> resourceMap = new HashMap<>();
 
     /**
      * The command manager which adds all command we want so 1.13+ players can instantly tab-complete them
@@ -101,6 +111,40 @@ public class PlugMan extends JavaPlugin {
     private void initConfig() {
         this.saveDefaultConfig();
         ignoredPlugins = this.getConfig().getStringList("ignored-plugins");
+
+        File resourcemapFile = new File(getDataFolder(), "resourcemaps.yml");
+        if (!resourcemapFile.exists()) {
+            saveResource("resourcemaps.yml", true);
+        }
+
+        FileConfiguration cfg = YamlConfiguration.loadConfiguration(resourcemapFile);
+        resourceMap.clear();
+        for (String name : cfg.getConfigurationSection("Resources").getKeys(false)) {
+            try {
+                long id = cfg.getLong("Resources." + name + ".ID");
+                boolean spigotmc = cfg.getBoolean("Resources." + name + ".spigotmc");
+                resourceMap.put(name.toLowerCase(Locale.ROOT), new Map.Entry<Long, Boolean>() {
+                    @Override
+                    public Long getKey() {
+                        return id;
+                    }
+
+                    @Override
+                    public Boolean getValue() {
+                        return spigotmc;
+                    }
+
+                    @Override
+                    public Boolean setValue(Boolean value) {
+                        return spigotmc;
+                    }
+                });
+            } catch (Exception e) {
+                getLogger().severe("An error occurred while trying to load mappings for '" + name + "'");
+                e.printStackTrace();
+            }
+
+        }
     }
 
     /**
@@ -137,5 +181,9 @@ public class PlugMan extends JavaPlugin {
      */
     public BukkitCommandWrap getBukkitCommandWrap() {
         return bukkitCommandWrap;
+    }
+
+    public HashMap<String, Map.Entry<Long, Boolean>> getResourceMap() {
+        return resourceMap;
     }
 }
