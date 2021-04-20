@@ -76,6 +76,12 @@ public class PlugMan extends JavaPlugin {
 
         instance = this;
 
+        File messagesFile = new File("plugins" + File.separator + "PlugMan", "messages.yml");
+
+        if (!messagesFile.exists()) {
+            saveResource("messages.yml", true);
+        }
+
         messageFormatter = new MessageFormatter();
 
         this.getCommand("plugman").setExecutor(new PlugManCommandHandler());
