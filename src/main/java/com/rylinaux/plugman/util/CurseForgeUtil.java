@@ -102,6 +102,62 @@ public class CurseForgeUtil {
     }
 
     /**
+     * Check if the installed plugin version is up-to-date with the Spigot version.
+     *
+     * @param pluginName the plugin name.
+     * @return the reflective UpdateResult.
+     */
+    public static UpdateResult checkUpToDate(String pluginName, long pluginId) {
+        if (pluginId < 0) {
+            Plugin plugin = Bukkit.getPluginManager().getPlugin(pluginName);
+            return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, plugin.getDescription().getVersion());
+        }
+
+        JSONArray versions = CurseForgeUtil.getPluginVersions(pluginId);
+
+        if (versions == null || versions.size() == 0) {
+            Plugin plugin = Bukkit.getPluginManager().getPlugin(pluginName);
+            return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, plugin.getDescription().getVersion());
+        }
+
+        JSONObject latest = (JSONObject) versions.get(versions.size() - 1);
+
+        String currentVersion = PluginUtil.getPluginVersion(pluginName);
+        if (!(Bukkit.getPluginManager().getPlugin(pluginName) instanceof JavaPlugin)) {
+            return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, currentVersion, "null");
+        }
+        JavaPlugin plugin = (JavaPlugin) Bukkit.getPluginManager().getPlugin(pluginName);
+        if (plugin == null) {
+            return new UpdateResult(UpdateResult.ResultType.NOT_INSTALLED, currentVersion, "null");
+        }
+        String latestVersion = (String) latest.get("md5");
+        HashCode currentPluginHashCode;
+
+        try {
+            Method getFileMethod = JavaPlugin.class.getDeclaredMethod("getFile");
+            getFileMethod.setAccessible(true);
+            File file = (File) getFileMethod.invoke(plugin);
+            currentPluginHashCode = Files.asByteSource(file).hash(Hashing.md5());
+            currentPluginHashCode.toString();
+        } catch (IOException | InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+            e.printStackTrace();
+            return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, currentVersion, latestVersion);
+        }
+
+        if (latestVersion == null) {
+            return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, currentVersion, latestVersion);
+        }
+        if (currentPluginHashCode.toString().equalsIgnoreCase(latestVersion)) {
+            latestVersion = (String) latest.get("name");
+            return new UpdateResult(UpdateResult.ResultType.UP_TO_DATE, currentVersion, latestVersion);
+        } else {
+            latestVersion = (String) latest.get("name");
+            return new UpdateResult(UpdateResult.ResultType.OUT_OF_DATE, currentVersion, latestVersion);
+        }
+
+    }
+
+    /**
      * Get the id of the plugin.
      *
      * @param name the name of the plugin.

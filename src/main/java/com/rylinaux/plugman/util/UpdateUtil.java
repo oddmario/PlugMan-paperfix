@@ -41,9 +41,9 @@ public class UpdateUtil {
             Map.Entry<Long, Boolean> entry = PlugMan.getInstance().getResourceMap().get(pluginName.toLowerCase(Locale.ROOT));
 
             if (entry.getValue()) {
-                return SpiGetUtil.checkUpToDate(pluginName);
+                return SpiGetUtil.checkUpToDate(pluginName, entry.getKey());
             } else {
-                return CurseForgeUtil.checkUpToDate(pluginName);
+                return CurseForgeUtil.checkUpToDate(pluginName, entry.getKey());
             }
         }
 
