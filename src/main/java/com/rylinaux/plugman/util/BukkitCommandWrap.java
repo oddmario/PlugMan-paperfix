@@ -31,8 +31,13 @@ public class BukkitCommandWrap {
         if (this.minecraftServerClass == null) try {
             this.minecraftServerClass = Class.forName("net.minecraft.server." + this.nmsVersion + ".MinecraftServer");
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-            return;
+            try {
+                this.minecraftServerClass = Class.forName("net.minecraft.server.MinecraftServer");
+            } catch (ClassNotFoundException classNotFoundException) {
+                classNotFoundException.addSuppressed(e);
+                classNotFoundException.printStackTrace();
+                return;
+            }
         }
 
         if (this.getServerMethod == null) try {
@@ -117,13 +122,19 @@ public class BukkitCommandWrap {
     }
 
     Field bField;
+
     public void unwrap(String command) {
         if (this.nmsVersion == null) return;
         if (this.minecraftServerClass == null) try {
             this.minecraftServerClass = Class.forName("net.minecraft.server." + this.nmsVersion + ".MinecraftServer");
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-            return;
+            try {
+                this.minecraftServerClass = Class.forName("net.minecraft.server.MinecraftServer");
+            } catch (ClassNotFoundException classNotFoundException) {
+                classNotFoundException.printStackTrace();
+                classNotFoundException.addSuppressed(e);
+                return;
+            }
         }
         if (this.getServerMethod == null) try {
             this.getServerMethod = this.minecraftServerClass.getMethod("getServer");
@@ -163,8 +174,14 @@ public class BukkitCommandWrap {
                 bField = Class.forName("net.minecraft.server." + nmsVersion + ".CommandDispatcher").getDeclaredField("b");
                 bField.setAccessible(true);
             } catch (NoSuchFieldException | ClassNotFoundException e) {
-                e.printStackTrace();
-                return;
+                if (this.bField == null) try {
+                    this.bField = Class.forName("net.minecraft.commands.CommandDispatcher").getDeclaredField("g");
+                    this.bField.setAccessible(true);
+                } catch (NoSuchFieldException | ClassNotFoundException ex) {
+                    ex.addSuppressed(e);
+                    e.printStackTrace();
+                    return;
+                }
             }
         }
 
