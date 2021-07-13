@@ -52,6 +52,9 @@ public class UpdateUtil {
             id = CurseForgeUtil.getPluginId(pluginName);
             if (id < 0) {
                 Plugin plugin = Bukkit.getPluginManager().getPlugin(pluginName);
+                if (plugin == null) {
+                    return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, pluginName);
+                }
                 return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, plugin.getDescription().getVersion());
             }
             return CurseForgeUtil.checkUpToDate(pluginName);

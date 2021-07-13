@@ -54,6 +54,9 @@ public class CurseForgeUtil {
 
         if (pluginId < 0) {
             Plugin plugin = Bukkit.getPluginManager().getPlugin(pluginName);
+            if (plugin == null) {
+                return new UpdateResult(UpdateResult.ResultType.NOT_INSTALLED);
+            }
             return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, plugin.getDescription().getVersion());
         }
 
@@ -61,6 +64,9 @@ public class CurseForgeUtil {
 
         if (versions == null || versions.size() == 0) {
             Plugin plugin = Bukkit.getPluginManager().getPlugin(pluginName);
+            if (plugin == null) {
+                return new UpdateResult(UpdateResult.ResultType.NOT_INSTALLED);
+            }
             return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, plugin.getDescription().getVersion());
         }
 
@@ -110,6 +116,9 @@ public class CurseForgeUtil {
     public static UpdateResult checkUpToDate(String pluginName, long pluginId) {
         if (pluginId < 0) {
             Plugin plugin = Bukkit.getPluginManager().getPlugin(pluginName);
+            if (plugin == null) {
+                return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, pluginName);
+            }
             return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, plugin.getDescription().getVersion());
         }
 
@@ -117,6 +126,9 @@ public class CurseForgeUtil {
 
         if (versions == null || versions.size() == 0) {
             Plugin plugin = Bukkit.getPluginManager().getPlugin(pluginName);
+            if (plugin == null) {
+                return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, pluginName);
+            }
             return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, plugin.getDescription().getVersion());
         }
 
@@ -124,11 +136,11 @@ public class CurseForgeUtil {
 
         String currentVersion = PluginUtil.getPluginVersion(pluginName);
         if (!(Bukkit.getPluginManager().getPlugin(pluginName) instanceof JavaPlugin)) {
-            return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, currentVersion, "null");
+            return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, currentVersion);
         }
         JavaPlugin plugin = (JavaPlugin) Bukkit.getPluginManager().getPlugin(pluginName);
         if (plugin == null) {
-            return new UpdateResult(UpdateResult.ResultType.NOT_INSTALLED, currentVersion, "null");
+            return new UpdateResult(UpdateResult.ResultType.NOT_INSTALLED, currentVersion);
         }
         String latestVersion = (String) latest.get("md5");
         HashCode currentPluginHashCode;

@@ -79,6 +79,9 @@ public class SpiGetUtil {
 
         if (pluginId < 0) {
             Plugin plugin = Bukkit.getPluginManager().getPlugin(pluginName);
+            if (plugin == null) {
+                return new UpdateResult(UpdateResult.ResultType.NOT_INSTALLED);
+            }
             return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, plugin.getDescription().getVersion());
         }
 
@@ -86,6 +89,9 @@ public class SpiGetUtil {
 
         if (versions == null || versions.size() == 0) {
             Plugin plugin = Bukkit.getPluginManager().getPlugin(pluginName);
+            if (plugin == null) {
+                return new UpdateResult(UpdateResult.ResultType.NOT_INSTALLED);
+            }
             return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, plugin.getDescription().getVersion());
         }
 
@@ -115,6 +121,9 @@ public class SpiGetUtil {
     public static UpdateResult checkUpToDate(String pluginName, long pluginId) {
         if (pluginId < 0) {
             Plugin plugin = Bukkit.getPluginManager().getPlugin(pluginName);
+            if (plugin == null) {
+                return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, pluginName);
+            }
             return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, plugin.getDescription().getVersion());
         }
 
@@ -122,6 +131,9 @@ public class SpiGetUtil {
 
         if (versions == null || versions.size() == 0) {
             Plugin plugin = Bukkit.getPluginManager().getPlugin(pluginName);
+            if (plugin == null) {
+                return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, pluginName);
+            }
             return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, plugin.getDescription().getVersion());
         }
 
