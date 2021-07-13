@@ -38,11 +38,11 @@ Resources:
   PetMaster:
     ID: 15904
     spigotmc: true
-  PlugMan:
-    ID: 484998
-    spigotmc: true
   ServerUtils:
     ID: 79599
+    spigotmc: true
+  ServerSystem:
+    ID: 78974
     spigotmc: true
   TimeIsMoney:
     ID: 12409
