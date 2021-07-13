@@ -5,3 +5,4 @@
 dependency-reduced-pom.xml
 copy.bat
 delete.bat
+.attach*
