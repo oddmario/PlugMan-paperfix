@@ -29,9 +29,9 @@ package com.rylinaux.plugman.command;
 import com.rylinaux.plugman.PlugMan;
 import com.rylinaux.plugman.pojo.UpdateResult;
 import com.rylinaux.plugman.util.FlagUtil;
-import com.rylinaux.plugman.util.UpdateUtil;
 import com.rylinaux.plugman.util.StringUtil;
 import com.rylinaux.plugman.util.ThreadUtil;
+import com.rylinaux.plugman.util.UpdateUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -39,6 +39,7 @@ import org.bukkit.command.CommandSender;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -105,6 +106,14 @@ public class CheckCommand extends AbstractCommand {
 
         final boolean toFile = FlagUtil.hasFlag(args, 'f');
 
+        System.out.println(Arrays.toString(args));
+
+        if (args[1] == null) {
+            sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("error.specify-plugin"));
+            sendUsage();
+            return;
+        }
+
         if (args[1].equalsIgnoreCase("all") || args[1].equalsIgnoreCase("*")) {
 
             if (hasPermission("all")) {
@@ -127,11 +136,11 @@ public class CheckCommand extends AbstractCommand {
                             String currentVersion = Bukkit.getPluginManager().getPlugin(entry.getKey()).getDescription().getVersion();
 
                             if (result == UpdateResult.ResultType.UP_TO_DATE) {
-                                upToDate.append(entry.getKey() + "(" + currentVersion + ") ");
+                                upToDate.append(entry.getKey()).append("(").append(currentVersion).append(") ");
                             } else if (result == UpdateResult.ResultType.INVALID_PLUGIN || result == UpdateResult.ResultType.NOT_INSTALLED) {
-                                unknown.append(entry.getKey() + "(" + currentVersion + ") ");
+                                unknown.append(entry.getKey()).append("(").append(currentVersion).append(") ");
                             } else {
-                                outOfDate.append(entry.getKey() + "(" + currentVersion + " -> " + entry.getValue().getLatestVersion() + ") ");
+                                outOfDate.append(entry.getKey()).append("(").append(currentVersion).append(" -> ").append(entry.getValue().getLatestVersion()).append(") ");
                             }
 
                         }
@@ -191,7 +200,7 @@ public class CheckCommand extends AbstractCommand {
 
         }
 
-        final String pluginName = StringUtil.consolidateStrings(args, 1).replaceAll(" ", "+").replace("-[a-zA-Z]", "");
+        final String pluginName = StringUtil.consolidateStrings(args, 1).replaceAll(" ", "+").replace("-[a-zA-Z]", "").replace("+null", "");
 
         sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("check.header"));
 
