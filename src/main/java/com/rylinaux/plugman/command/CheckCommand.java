@@ -39,7 +39,6 @@ import org.bukkit.command.CommandSender;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -105,8 +104,6 @@ public class CheckCommand extends AbstractCommand {
         }
 
         final boolean toFile = FlagUtil.hasFlag(args, 'f');
-
-        System.out.println(Arrays.toString(args));
 
         if (args[1] == null) {
             sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("error.specify-plugin"));
