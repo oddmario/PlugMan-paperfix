@@ -126,6 +126,7 @@ public class PlugMan extends JavaPlugin {
         FileConfiguration cfg = YamlConfiguration.loadConfiguration(resourcemapFile);
         resourceMap.clear();
         for (String name : cfg.getConfigurationSection("Resources").getKeys(false)) {
+            if (name.equalsIgnoreCase("PlugMan")) continue;
             try {
                 long id = cfg.getLong("Resources." + name + ".ID");
                 boolean spigotmc = cfg.getBoolean("Resources." + name + ".spigotmc");
@@ -151,6 +152,23 @@ public class PlugMan extends JavaPlugin {
             }
 
         }
+
+        resourceMap.put("plugman", new Map.Entry<Long, Boolean>() {
+            @Override
+            public Long getKey() {
+                return 88135L;
+            }
+
+            @Override
+            public Boolean getValue() {
+                return true;
+            }
+
+            @Override
+            public Boolean setValue(Boolean value) {
+                return true;
+            }
+        });
     }
 
     /**
