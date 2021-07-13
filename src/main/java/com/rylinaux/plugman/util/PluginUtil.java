@@ -320,6 +320,8 @@ public class PluginUtil {
                 if (Bukkit.getOnlinePlayers().size() >= 1)
                     for (Player player : Bukkit.getOnlinePlayers()) player.updateCommands();
             }, 10L);
+
+            PlugMan.getInstance().getFilePluginMap().put(pluginFile.getName(), target.getName());
         }
 
         return PlugMan.getInstance().getMessageFormatter().format("load.loaded", target.getName());
