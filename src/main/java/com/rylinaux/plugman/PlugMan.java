@@ -90,7 +90,6 @@ public class PlugMan extends JavaPlugin {
 
     @Override
     public void onEnable() {
-
         instance = this;
 
         File messagesFile = new File("plugins" + File.separator + "PlugMan", "messages.yml");
@@ -128,6 +127,7 @@ public class PlugMan extends JavaPlugin {
 
         for (File file : new File("plugins").listFiles()) {
             if (file.isDirectory()) continue;
+            if (!file.getName().toLowerCase(Locale.ROOT).endsWith(".jar")) continue;
             String hash = null;
             try {
                 hash = Files.asByteSource(file).hash(Hashing.md5()).toString();
@@ -206,13 +206,14 @@ public class PlugMan extends JavaPlugin {
                 }
                 for (String fileName : fileHashMap.keySet()) {
                     if (!new File("plugins", fileName).exists()) {
-                        fileHashMap.remove(fileName);
                         Plugin plugin = Bukkit.getPluginManager().getPlugin(filePluginMap.get(fileName));
                         if (plugin == null) {
                             fileHashMap.remove(fileName);
                             filePluginMap.remove(fileName);
                             continue;
                         }
+                        if (PluginUtil.isIgnored(plugin)) continue;
+                        fileHashMap.remove(fileName);
                         Bukkit.getScheduler().runTask(this, () -> {
                             Bukkit.getConsoleSender().sendMessage(PluginUtil.unload(plugin));
                         });
@@ -250,6 +251,8 @@ public class PlugMan extends JavaPlugin {
                             filePluginMap.remove(file.getName());
                             continue;
                         }
+
+                        if (PluginUtil.isIgnored(plugin)) continue;
 
                         fileHashMap.remove(file.getName());
                         fileHashMap.put(file.getName(), hash);
