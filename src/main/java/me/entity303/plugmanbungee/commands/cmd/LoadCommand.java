@@ -5,12 +5,14 @@ import me.entity303.plugmanbungee.util.PluginResult;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.plugin.PluginDescription;
-import org.yaml.snakeyaml.Yaml;
+import net.md_5.bungee.config.Configuration;
+import net.md_5.bungee.config.ConfigurationProvider;
+import net.md_5.bungee.config.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -47,7 +49,7 @@ public class LoadCommand {
             for (File file : new File("plugins").listFiles()) {
                 if (file.isFile()) {
                     if (file.getName().toLowerCase(Locale.ROOT).endsWith(".jar")) {
-                        Yaml yaml = new Yaml();
+                        //Yaml yaml = new Yaml();
                         try (JarFile jar = new JarFile(file)) {
                             JarEntry pdf = jar.getJarEntry("bungee.yml");
                             if (pdf == null) {
@@ -58,15 +60,16 @@ public class LoadCommand {
                                 continue;
 
                             try (InputStream in = jar.getInputStream(pdf)) {
-                                PluginDescription desc = yaml.loadAs(in, PluginDescription.class);
+                                //PluginDescription desc = yaml.loadAs(in, PluginDescription.class);
+                                Configuration cfg = ConfigurationProvider.getProvider(YamlConfiguration.class).load(new InputStreamReader(in));
 
-                                if (desc.getName() == null)
+                                if(cfg.get("name", null) == null)
+                                continue;
+
+                                if (cfg.get("main", null) == null)
                                     continue;
 
-                                if (desc.getMain() == null)
-                                    continue;
-
-                                if (ProxyServer.getInstance().getPluginManager().getPlugin(desc.getName()) != null)
+                                if (ProxyServer.getInstance().getPluginManager().getPlugin(cfg.getString("name", null)) != null)
                                     continue;
 
                                 completions.add(file.getName().substring(0, file.getName().length() - 4));
