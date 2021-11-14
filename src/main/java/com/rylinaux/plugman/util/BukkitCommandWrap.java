@@ -1,5 +1,6 @@
 package com.rylinaux.plugman.util;
 
+import com.mojang.brigadier.tree.RootCommandNode;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 
@@ -122,6 +123,7 @@ public class BukkitCommandWrap {
     }
 
     Field bField;
+    Method removeCommandMethod;
 
     public void unwrap(String command) {
         if (this.nmsVersion == null) return;
@@ -193,6 +195,19 @@ public class BukkitCommandWrap {
             return;
         }
 
-        b.getRoot().removeCommand(command);
+        if (removeCommandMethod == null) {
+            try {
+                removeCommandMethod = RootCommandNode.class.getDeclaredMethod("removeCommand", String.class);
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+                return;
+            }
+        }
+
+        try {
+            removeCommandMethod.invoke(b.getRoot(), command);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
     }
 }
