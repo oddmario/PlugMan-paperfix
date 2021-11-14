@@ -20,6 +20,6 @@ public class PluginsCommand extends Command {
     public void execute(CommandSender sender, String[] args) {
         Collection<Plugin> plugins = ProxyServer.getInstance().getPluginManager().getPlugins();
         String message = plugins.stream().map(plugin -> ChatColor.RESET + "," + " " + (plugin.getDescription() == null ? ChatColor.RED : ChatColor.GREEN) + plugin.getDescription().getName()).collect(Collectors.joining("", "Plugins (" + plugins.size() + "):", ""));
-        sender.sendMessage(new TextComponent(message.replace(":,", ":")));
+        sender.sendMessage(new TextComponent(message.replace(":" + ChatColor.RESET + ",", ":")));
     }
 }
