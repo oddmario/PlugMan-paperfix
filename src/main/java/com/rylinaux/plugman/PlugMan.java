@@ -38,14 +38,17 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.InvalidDescriptionException;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
+import org.bukkit.plugin.SimplePluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
+import java.util.zip.ZipException;
 
 /**
  * Plugin manager for Bukkit servers.
@@ -54,56 +57,98 @@ import java.util.stream.Collectors;
  */
 public class PlugMan extends JavaPlugin {
     /**
+     * The instance of the plugin
+     */
+    private static PlugMan instance = null;
+    /**
      * HashMap that contains all mappings from resourcemaps.yml
      */
     private final HashMap<String, Map.Entry<Long, Boolean>> resourceMap = new HashMap<>();
-
+    /**
+     * Stores all file names + hashes for auto (re/un)load
+     */
+    private final HashMap<String, String> fileHashMap = new HashMap<>();
+    /**
+     * Stores all file names + plugin names for auto unload
+     */
+    private final HashMap<String, String> filePluginMap = new HashMap<>();
     /**
      * The command manager which adds all command we want so 1.13+ players can instantly tab-complete them
      */
     private BukkitCommandWrap bukkitCommandWrap = null;
-
-    /**
-     * The instance of the plugin
-     */
-    private static PlugMan instance = null;
-
     /**
      * List of plugins to ignore, partially.
      */
     private List<String> ignoredPlugins = null;
-
     /**
      * The message manager
      */
     private MessageFormatter messageFormatter = null;
 
     /**
-     * Stores all file names + hashes for auto (re/un)load
+     * Returns the instance of the plugin.
+     *
+     * @return the instance of the plugin
      */
-    private final HashMap<String, String> fileHashMap = new HashMap<>();
+    public static PlugMan getInstance() {
+        return PlugMan.instance;
+    }
+
+    @Override
+    public void onLoad() {
+        if (Bukkit.getPluginManager().getPlugin("PlugMan") == null) this.addPluginToList();
+    }
 
     /**
-     * Stores all file names + plugin names for auto unload
+     * For older server versions: Adds "PlugManX" as "PlugMan" to "lookupNames" field of "SimplePluginManager"
+     * This is needed because of plugins which depend on "PlugMan", but server has "PlugManX" installed
+     * Not needed on newer versions, because of new "provides" keyword in plugin.yml
      */
-    private final HashMap<String, String> filePluginMap = new HashMap<>();
+    private void addPluginToList() {
+        Field lookupNamesField = null;
+
+        try {
+            lookupNamesField = SimplePluginManager.class.getDeclaredField("lookupNames");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        if (lookupNamesField == null) {
+            Bukkit.getLogger().severe("Failed to add PlugMan to plugin list!\nNot a bukkit environment?");
+            return;
+        }
+
+        lookupNamesField.setAccessible(true);
+
+        HashMap<String, Plugin> lookupNames = null;
+        try {
+            lookupNames = (HashMap<String, Plugin>) lookupNamesField.get(Bukkit.getPluginManager());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        if (lookupNames == null) {
+            Bukkit.getLogger().severe("Failed to add PlugMan to plugin list!\nNot a bukkit environment?");
+            return;
+        }
+
+        lookupNames.put("PlugMan", this);
+    }
 
     @Override
     public void onEnable() {
-        instance = this;
+        PlugMan.instance = this;
 
         File messagesFile = new File("plugins" + File.separator + "PlugMan", "messages.yml");
 
-        if (!messagesFile.exists()) {
-            saveResource("messages.yml", true);
-        }
+        if (!messagesFile.exists()) this.saveResource("messages.yml", true);
 
-        messageFormatter = new MessageFormatter();
+        this.messageFormatter = new MessageFormatter();
 
         this.getCommand("plugman").setExecutor(new PlugManCommandHandler());
         this.getCommand("plugman").setTabCompleter(new PlugManTabCompleter());
 
-        initConfig();
+        this.initConfig();
 
         String version;
         try {
@@ -120,9 +165,9 @@ public class PlugMan extends JavaPlugin {
         }*/
         try {
             Class.forName("com.mojang.brigadier.CommandDispatcher");
-            bukkitCommandWrap = new BukkitCommandWrap();
+            this.bukkitCommandWrap = new BukkitCommandWrap();
         } catch (ClassNotFoundException | NoClassDefFoundError e) {
-            bukkitCommandWrap = new BukkitCommandWrap_Useless();
+            this.bukkitCommandWrap = new BukkitCommandWrap_Useless();
         }
 
         for (File file : new File("plugins").listFiles()) {
@@ -134,12 +179,16 @@ public class PlugMan extends JavaPlugin {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            fileHashMap.put(file.getName(), hash);
+            this.fileHashMap.put(file.getName(), hash);
 
             JarFile jarFile = null;
             try {
                 jarFile = new JarFile(file);
             } catch (IOException e) {
+                if (e instanceof ZipException) {
+                    System.out.println("Possible broken plugin detected: " + file.getName());
+                    continue;
+                }
                 e.printStackTrace();
                 continue;
             }
@@ -164,21 +213,19 @@ public class PlugMan extends JavaPlugin {
                 continue;
             }
 
-            filePluginMap.put(file.getName(), descriptionFile.getName());
+            this.filePluginMap.put(file.getName(), descriptionFile.getName());
         }
 
         boolean alerted = false;
 
-        if (getConfig().getBoolean("auto-load.enabled", false)) {
+        if (this.getConfig().getBoolean("auto-load.enabled", false)) {
             Bukkit.getLogger().warning("!!! The auto (re/un)load feature can break plugins, use with caution !!!");
             Bukkit.getLogger().warning("If anything breaks, a restart will probably fix it!");
             alerted = true;
             Bukkit.getScheduler().scheduleAsyncRepeatingTask(this, () -> {
-                if (!new File("plugins").isDirectory()) {
-                    return;
-                }
-                for (File file : Arrays.stream(new File("plugins").listFiles()).filter(File::isFile).filter(file -> file.getName().toLowerCase(Locale.ROOT).endsWith(".jar")).collect(Collectors.toList())) {
-                    if (!fileHashMap.containsKey(file.getName())) {
+                if (!new File("plugins").isDirectory()) return;
+                for (File file : Arrays.stream(new File("plugins").listFiles()).filter(File::isFile).filter(file -> file.getName().toLowerCase(Locale.ROOT).endsWith(".jar")).collect(Collectors.toList()))
+                    if (!this.fileHashMap.containsKey(file.getName())) {
                         Bukkit.getScheduler().runTask(this, () -> {
                             Bukkit.getConsoleSender().sendMessage(PluginUtil.load(file.getName().replace(".jar", "")));
                         });
@@ -188,54 +235,46 @@ public class PlugMan extends JavaPlugin {
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-                        fileHashMap.put(file.getName(), hash);
+                        this.fileHashMap.put(file.getName(), hash);
                     }
-                }
-            }, getConfig().getLong("auto-load.check-every-seconds") * 20, getConfig().getLong("auto-load.check-every-seconds") * 20);
+            }, this.getConfig().getLong("auto-load.check-every-seconds") * 20, this.getConfig().getLong("auto-load.check-every-seconds") * 20);
         }
 
-        if (getConfig().getBoolean("auto-unload.enabled", false)) {
+        if (this.getConfig().getBoolean("auto-unload.enabled", false)) {
             if (!alerted) {
                 Bukkit.getLogger().warning("!!! The auto (re/un)load feature can break plugins, use with caution !!!");
                 Bukkit.getLogger().warning("If anything breaks, a restart will probably fix it!");
                 alerted = true;
             }
             Bukkit.getScheduler().scheduleAsyncRepeatingTask(this, () -> {
-                if (!new File("plugins").isDirectory()) {
-                    return;
-                }
-                for (String fileName : fileHashMap.keySet()) {
+                if (!new File("plugins").isDirectory()) return;
+                for (String fileName : this.fileHashMap.keySet())
                     if (!new File("plugins", fileName).exists()) {
-                        Plugin plugin = Bukkit.getPluginManager().getPlugin(filePluginMap.get(fileName));
+                        Plugin plugin = Bukkit.getPluginManager().getPlugin(this.filePluginMap.get(fileName));
                         if (plugin == null) {
-                            fileHashMap.remove(fileName);
-                            filePluginMap.remove(fileName);
+                            this.fileHashMap.remove(fileName);
+                            this.filePluginMap.remove(fileName);
                             continue;
                         }
                         if (PluginUtil.isIgnored(plugin)) continue;
-                        fileHashMap.remove(fileName);
+                        this.fileHashMap.remove(fileName);
                         Bukkit.getScheduler().runTask(this, () -> {
                             Bukkit.getConsoleSender().sendMessage(PluginUtil.unload(plugin));
                         });
                     }
-                }
-            }, getConfig().getLong("auto-unload.check-every-seconds") * 20, getConfig().getLong("auto-unload.check-every-seconds") * 20);
+            }, this.getConfig().getLong("auto-unload.check-every-seconds") * 20, this.getConfig().getLong("auto-unload.check-every-seconds") * 20);
         }
 
-        if (getConfig().getBoolean("auto-reload.enabled", false)) {
+        if (this.getConfig().getBoolean("auto-reload.enabled", false)) {
             if (!alerted) {
                 Bukkit.getLogger().warning("!!! The auto (re/un)load feature can break plugins, use with caution !!!");
                 Bukkit.getLogger().warning("If anything breaks, a restart will probably fix it!");
                 alerted = true;
             }
             Bukkit.getScheduler().scheduleAsyncRepeatingTask(this, () -> {
-                if (!new File("plugins").isDirectory()) {
-                    return;
-                }
+                if (!new File("plugins").isDirectory()) return;
                 for (File file : Arrays.stream(new File("plugins").listFiles()).filter(File::isFile).filter(file -> file.getName().toLowerCase(Locale.ROOT).endsWith(".jar")).collect(Collectors.toList())) {
-                    if (!fileHashMap.containsKey(file.getName())) {
-                        continue;
-                    }
+                    if (!this.fileHashMap.containsKey(file.getName())) continue;
                     String hash = null;
                     try {
                         hash = Files.asByteSource(file).hash(Hashing.md5()).toString();
@@ -244,18 +283,18 @@ public class PlugMan extends JavaPlugin {
                         continue;
                     }
 
-                    if (!hash.equalsIgnoreCase(fileHashMap.get(file.getName()))) {
-                        Plugin plugin = Bukkit.getPluginManager().getPlugin(filePluginMap.get(file.getName()));
+                    if (!hash.equalsIgnoreCase(this.fileHashMap.get(file.getName()))) {
+                        Plugin plugin = Bukkit.getPluginManager().getPlugin(this.filePluginMap.get(file.getName()));
                         if (plugin == null) {
-                            fileHashMap.remove(file.getName());
-                            filePluginMap.remove(file.getName());
+                            this.fileHashMap.remove(file.getName());
+                            this.filePluginMap.remove(file.getName());
                             continue;
                         }
 
                         if (PluginUtil.isIgnored(plugin)) continue;
 
-                        fileHashMap.remove(file.getName());
-                        fileHashMap.put(file.getName(), hash);
+                        this.fileHashMap.remove(file.getName());
+                        this.fileHashMap.put(file.getName(), hash);
 
                         Bukkit.getScheduler().runTask(this, () -> {
                             Bukkit.getConsoleSender().sendMessage(PluginUtil.unload(plugin));
@@ -263,15 +302,15 @@ public class PlugMan extends JavaPlugin {
                         });
                     }
                 }
-            }, getConfig().getLong("auto-reload.check-every-seconds") * 20, getConfig().getLong("auto-reload.check-every-seconds") * 20);
+            }, this.getConfig().getLong("auto-reload.check-every-seconds") * 20, this.getConfig().getLong("auto-reload.check-every-seconds") * 20);
         }
     }
 
     @Override
     public void onDisable() {
-        instance = null;
-        messageFormatter = null;
-        ignoredPlugins = null;
+        PlugMan.instance = null;
+        this.messageFormatter = null;
+        this.ignoredPlugins = null;
     }
 
     /**
@@ -280,28 +319,26 @@ public class PlugMan extends JavaPlugin {
     private void initConfig() {
         this.saveDefaultConfig();
 
-        if (!getConfig().isSet("auto-load.enabled") || !getConfig().isSet("auto-unload.enabled") || !getConfig().isSet("auto-reload.enabled") || !getConfig().isSet("ignored-plugins")) {
+        if (!this.getConfig().isSet("auto-load.enabled") || !this.getConfig().isSet("auto-unload.enabled") || !this.getConfig().isSet("auto-reload.enabled") || !this.getConfig().isSet("ignored-plugins")) {
             Bukkit.getLogger().severe("Invalid PlugMan config detected! Creating new one...");
             new File("plugins" + File.separator + "PlugMan", "config.yml").renameTo(new File("plugins" + File.separator + "PlugMan", "config.yml.old-" + System.currentTimeMillis()));
-            saveDefaultConfig();
+            this.saveDefaultConfig();
             Bukkit.getLogger().info("New config created!");
         }
 
-        ignoredPlugins = this.getConfig().getStringList("ignored-plugins");
+        this.ignoredPlugins = this.getConfig().getStringList("ignored-plugins");
 
-        File resourcemapFile = new File(getDataFolder(), "resourcemaps.yml");
-        if (!resourcemapFile.exists()) {
-            saveResource("resourcemaps.yml", true);
-        }
+        File resourcemapFile = new File(this.getDataFolder(), "resourcemaps.yml");
+        if (!resourcemapFile.exists()) this.saveResource("resourcemaps.yml", true);
 
         FileConfiguration cfg = YamlConfiguration.loadConfiguration(resourcemapFile);
-        resourceMap.clear();
+        this.resourceMap.clear();
         for (String name : cfg.getConfigurationSection("Resources").getKeys(false)) {
             if (name.equalsIgnoreCase("PlugMan")) continue;
             try {
                 long id = cfg.getLong("Resources." + name + ".ID");
                 boolean spigotmc = cfg.getBoolean("Resources." + name + ".spigotmc");
-                resourceMap.put(name.toLowerCase(Locale.ROOT), new Map.Entry<Long, Boolean>() {
+                this.resourceMap.put(name.toLowerCase(Locale.ROOT), new Map.Entry<Long, Boolean>() {
                     @Override
                     public Long getKey() {
                         return id;
@@ -318,13 +355,13 @@ public class PlugMan extends JavaPlugin {
                     }
                 });
             } catch (Exception e) {
-                getLogger().severe("An error occurred while trying to load mappings for '" + name + "'");
+                this.getLogger().severe("An error occurred while trying to load mappings for '" + name + "'");
                 e.printStackTrace();
             }
 
         }
 
-        resourceMap.put("plugman", new Map.Entry<Long, Boolean>() {
+        this.resourceMap.put("plugman", new Map.Entry<Long, Boolean>() {
             @Override
             public Long getKey() {
                 return 88135L;
@@ -343,21 +380,12 @@ public class PlugMan extends JavaPlugin {
     }
 
     /**
-     * Returns the instance of the plugin.
-     *
-     * @return the instance of the plugin
-     */
-    public static PlugMan getInstance() {
-        return instance;
-    }
-
-    /**
      * Returns the list of ignored plugins.
      *
      * @return the ignored plugins
      */
     public List<String> getIgnoredPlugins() {
-        return ignoredPlugins;
+        return this.ignoredPlugins;
     }
 
     /**
@@ -366,7 +394,7 @@ public class PlugMan extends JavaPlugin {
      * @return the message manager
      */
     public MessageFormatter getMessageFormatter() {
-        return messageFormatter;
+        return this.messageFormatter;
     }
 
     /**
@@ -375,14 +403,14 @@ public class PlugMan extends JavaPlugin {
      * @return the command manager
      */
     public BukkitCommandWrap getBukkitCommandWrap() {
-        return bukkitCommandWrap;
+        return this.bukkitCommandWrap;
     }
 
     public HashMap<String, Map.Entry<Long, Boolean>> getResourceMap() {
-        return resourceMap;
+        return this.resourceMap;
     }
 
     public HashMap<String, String> getFilePluginMap() {
-        return filePluginMap;
+        return this.filePluginMap;
     }
 }
