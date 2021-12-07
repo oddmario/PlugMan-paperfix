@@ -1,5 +1,6 @@
 package com.rylinaux.plugman.util;
 
+import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.RootCommandNode;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -10,12 +11,16 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public class BukkitCommandWrap {
+    private Field bField;
+    private Method removeCommandMethod;
     private String nmsVersion;
     private Class minecraftServerClass;
     private Method aMethod;
     private Method getServerMethod;
+    private Field vanillaCommandDispatcherField;
     private Method getCommandDispatcherMethod;
     private Method registerMethod;
+    private Method syncCommandsMethod;
     private Constructor bukkitcommandWrapperConstructor;
 
     public BukkitCommandWrap() {
@@ -57,18 +62,34 @@ public class BukkitCommandWrap {
             return;
         }
 
-        if (this.getCommandDispatcherMethod == null) try {
-            this.getCommandDispatcherMethod = this.minecraftServerClass.getDeclaredMethod("getCommandDispatcher");
-            this.getCommandDispatcherMethod.setAccessible(true);
-        } catch (NoSuchMethodException e) {
+        if (this.vanillaCommandDispatcherField == null) try {
+            this.vanillaCommandDispatcherField = this.minecraftServerClass.getDeclaredField("vanillaCommandDispatcher");
+            this.vanillaCommandDispatcherField.setAccessible(true);
+        } catch (NoSuchFieldException e) {
             e.printStackTrace();
             return;
         }
 
-        Object commandDispatcher;
+        Object commandDispatcher = null;
         try {
-            commandDispatcher = this.getCommandDispatcherMethod.invoke(minecraftServer);
-        } catch (IllegalAccessException | InvocationTargetException e) {
+            commandDispatcher = this.vanillaCommandDispatcherField.get(minecraftServer);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        if (this.bField == null) try {
+            this.bField = Class.forName("net.minecraft.commands.CommandDispatcher").getDeclaredField("g");
+            this.bField.setAccessible(true);
+        } catch (NoSuchFieldException | ClassNotFoundException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        com.mojang.brigadier.CommandDispatcher b;
+        try {
+            b = (com.mojang.brigadier.CommandDispatcher) this.bField.get(commandDispatcher);
+        } catch (IllegalAccessException e) {
             e.printStackTrace();
             return;
         }
@@ -120,10 +141,21 @@ public class BukkitCommandWrap {
         } catch (IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
         }
-    }
 
-    Field bField;
-    Method removeCommandMethod;
+        if (this.syncCommandsMethod == null) try {
+            this.syncCommandsMethod = Class.forName("org.bukkit.craftbukkit." + this.nmsVersion + ".CraftServer").getDeclaredMethod("syncCommands");
+            this.syncCommandsMethod.setAccessible(true);
+        } catch (NoSuchMethodException | ClassNotFoundException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        try {
+            this.syncCommandsMethod.invoke(Bukkit.getServer());
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
+    }
 
     public void unwrap(String command) {
         if (this.nmsVersion == null) return;
@@ -149,63 +181,77 @@ public class BukkitCommandWrap {
         Object server;
 
         try {
-            server = getServerMethod.invoke(minecraftServerClass);
+            server = this.getServerMethod.invoke(this.minecraftServerClass);
         } catch (IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
             return;
         }
 
-        if (this.getCommandDispatcherMethod == null) try {
-            this.getCommandDispatcherMethod = this.minecraftServerClass.getDeclaredMethod("getCommandDispatcher");
-            this.getCommandDispatcherMethod.setAccessible(true);
-        } catch (NoSuchMethodException e) {
+        if (this.vanillaCommandDispatcherField == null) try {
+            this.vanillaCommandDispatcherField = this.minecraftServerClass.getDeclaredField("vanillaCommandDispatcher");
+            this.vanillaCommandDispatcherField.setAccessible(true);
+        } catch (NoSuchFieldException e) {
             e.printStackTrace();
             return;
         }
 
         Object commandDispatcher = null;
         try {
-            commandDispatcher = getCommandDispatcherMethod.invoke(server);
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            e.printStackTrace();
-            return;
-        }
-
-        if (bField == null) {
-            try {
-                bField = Class.forName("net.minecraft.server." + nmsVersion + ".CommandDispatcher").getDeclaredField("b");
-                bField.setAccessible(true);
-            } catch (NoSuchFieldException | ClassNotFoundException e) {
-                if (this.bField == null) try {
-                    this.bField = Class.forName("net.minecraft.commands.CommandDispatcher").getDeclaredField("g");
-                    this.bField.setAccessible(true);
-                } catch (NoSuchFieldException | ClassNotFoundException ex) {
-                    ex.addSuppressed(e);
-                    e.printStackTrace();
-                    return;
-                }
-            }
-        }
-
-        com.mojang.brigadier.CommandDispatcher b;
-        try {
-            b = (com.mojang.brigadier.CommandDispatcher) bField.get(commandDispatcher);
+            commandDispatcher = this.vanillaCommandDispatcherField.get(server);
         } catch (IllegalAccessException e) {
             e.printStackTrace();
             return;
         }
 
-        if (removeCommandMethod == null) {
-            try {
-                removeCommandMethod = RootCommandNode.class.getDeclaredMethod("removeCommand", String.class);
-            } catch (NoSuchMethodException e) {
+        if (this.bField == null) try {
+            this.bField = Class.forName("net.minecraft.server." + this.nmsVersion + ".CommandDispatcher").getDeclaredField("b");
+            this.bField.setAccessible(true);
+        } catch (NoSuchFieldException | ClassNotFoundException e) {
+            if (this.bField == null) try {
+                this.bField = Class.forName("net.minecraft.commands.CommandDispatcher").getDeclaredField("g");
+                this.bField.setAccessible(true);
+            } catch (NoSuchFieldException | ClassNotFoundException ex) {
+                ex.addSuppressed(e);
                 e.printStackTrace();
                 return;
             }
         }
 
+        com.mojang.brigadier.CommandDispatcher b;
         try {
-            removeCommandMethod.invoke(b.getRoot(), command);
+            b = (com.mojang.brigadier.CommandDispatcher) this.bField.get(commandDispatcher);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        if (this.removeCommandMethod == null) try {
+            try {
+                this.removeCommandMethod = RootCommandNode.class.getDeclaredMethod("removeCommand", String.class);
+            } catch (NoSuchMethodException | NoSuchMethodError ex) {
+                this.removeCommandMethod = CommandNode.class.getDeclaredMethod("removeCommand", String.class);
+            }
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        try {
+            this.removeCommandMethod.invoke(b.getRoot(), command);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
+
+        if (this.syncCommandsMethod == null) try {
+            this.syncCommandsMethod = Class.forName("org.bukkit.craftbukkit." + this.nmsVersion + ".CraftServer").getDeclaredMethod("syncCommands");
+            this.syncCommandsMethod.setAccessible(true);
+        } catch (NoSuchMethodException | ClassNotFoundException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        try {
+            this.syncCommandsMethod.invoke(Bukkit.getServer());
         } catch (IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
         }
