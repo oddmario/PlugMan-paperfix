@@ -209,7 +209,7 @@ public class PlugMan extends JavaPlugin {
     public void onEnable() {
         PlugMan.instance = this;
 
-        File messagesFile = new File("plugins" + File.separator + "PlugMan", "messages.yml");
+        File messagesFile = new File("plugins" + File.separator + "PlugManX", "messages.yml");
 
         if (!messagesFile.exists()) this.saveResource("messages.yml", true);
 
@@ -391,7 +391,7 @@ public class PlugMan extends JavaPlugin {
 
         if (!this.getConfig().isSet("auto-load.enabled") || !this.getConfig().isSet("auto-unload.enabled") || !this.getConfig().isSet("auto-reload.enabled") || !this.getConfig().isSet("ignored-plugins")) {
             Bukkit.getLogger().severe("Invalid PlugMan config detected! Creating new one...");
-            new File("plugins" + File.separator + "PlugMan", "config.yml").renameTo(new File("plugins" + File.separator + "PlugMan", "config.yml.old-" + System.currentTimeMillis()));
+            new File("plugins" + File.separator + "PlugManX", "config.yml").renameTo(new File("plugins" + File.separator + "PlugManX", "config.yml.old-" + System.currentTimeMillis()));
             this.saveDefaultConfig();
             Bukkit.getLogger().info("New config created!");
         }

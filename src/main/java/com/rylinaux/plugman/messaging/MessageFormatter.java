@@ -46,7 +46,7 @@ public class MessageFormatter {
      * Construct our object.
      */
     public MessageFormatter() {
-        this.messageFile = new MessageFile(new File("plugins" + File.separator + "PlugMan", "messages.yml"));
+        this.messageFile = new MessageFile(new File("plugins" + File.separator + "PlugManX", "messages.yml"));
     }
 
     /**
