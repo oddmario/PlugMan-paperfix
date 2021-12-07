@@ -41,10 +41,10 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.SimplePluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.lang.reflect.Field;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.*;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
@@ -56,10 +56,26 @@ import java.util.zip.ZipException;
  * @author rylinaux
  */
 public class PlugMan extends JavaPlugin {
+    private static boolean createdDummyPlugMan = false;
     /**
      * The instance of the plugin
      */
     private static PlugMan instance = null;
+
+    static {
+        try {
+            PluginDescriptionFile.class.getDeclaredField("provides");
+            if (new File("plugins", "PlugManDummy.jar").exists()) {
+                new File("plugins", "PlugManDummy.jar").delete();
+            }
+        } catch (NoSuchFieldError | NoSuchFieldException ignored) {
+            if (!new File("plugins", "PlugManDummy.jar").exists())
+                System.out.println("'Legacy' server version detected, please restart the server in order to load Dummy PlugMan, please ignore all UnknownDependencyException messages about PlugMan if you did not restart.");
+            PlugMan.saveResourceStatic("PlugManDummy.jar", true);
+            PlugMan.createdDummyPlugMan = true;
+        }
+    }
+
     /**
      * HashMap that contains all mappings from resourcemaps.yml
      */
@@ -72,6 +88,7 @@ public class PlugMan extends JavaPlugin {
      * Stores all file names + plugin names for auto unload
      */
     private final HashMap<String, String> filePluginMap = new HashMap<>();
+    private Field lookupNamesField = null;
     /**
      * The command manager which adds all command we want so 1.13+ players can instantly tab-complete them
      */
@@ -85,6 +102,51 @@ public class PlugMan extends JavaPlugin {
      */
     private MessageFormatter messageFormatter = null;
 
+    private static InputStream getResourceStatic(String filename) {
+        try {
+            URL url = PlugMan.class.getClassLoader().getResource(filename);
+            if (url == null) return null;
+            else {
+                URLConnection connection = url.openConnection();
+                connection.setUseCaches(false);
+                return connection.getInputStream();
+            }
+        } catch (IOException var4) {
+            return null;
+        }
+    }
+
+    public static void saveResourceStatic(String resourcePath, boolean replace) {
+        File dataFolder = new File("plugins");
+        if (resourcePath != null && !resourcePath.equals("")) {
+            resourcePath = resourcePath.replace('\\', '/');
+            InputStream in = PlugMan.getResourceStatic(resourcePath);
+            if (in == null)
+                throw new IllegalArgumentException("The embedded resource '" + resourcePath + "' cannot be found in PlugManX");
+            else {
+                File outFile = new File(dataFolder, resourcePath);
+                int lastIndex = resourcePath.lastIndexOf(47);
+                File outDir = new File(dataFolder, resourcePath.substring(0, Math.max(lastIndex, 0)));
+                if (!outDir.exists()) outDir.mkdirs();
+
+                try {
+                    OutputStream out = new FileOutputStream(outFile);
+                    byte[] buf = new byte[1024];
+
+                    int len;
+                    while ((len = in.read(buf)) > 0) out.write(buf, 0, len);
+
+                    out.close();
+                    in.close();
+                } catch (IOException var10) {
+                    var10.printStackTrace();
+                    System.out.println("Could not save " + outFile.getName() + " to " + outFile);
+                }
+
+            }
+        } else throw new IllegalArgumentException("ResourcePath cannot be null or empty");
+    }
+
     /**
      * Returns the instance of the plugin.
      *
@@ -94,35 +156,34 @@ public class PlugMan extends JavaPlugin {
         return PlugMan.instance;
     }
 
-    @Override
-    public void onLoad() {
-        if (Bukkit.getPluginManager().getPlugin("PlugMan") == null) this.addPluginToList();
-    }
-
     /**
      * For older server versions: Adds "PlugManX" as "PlugMan" to "lookupNames" field of "SimplePluginManager"
      * This is needed because of plugins which depend on "PlugMan", but server has "PlugManX" installed
      * Not needed on newer versions, because of new "provides" keyword in plugin.yml
      */
     private void addPluginToList() {
-        Field lookupNamesField = null;
-
         try {
-            lookupNamesField = SimplePluginManager.class.getDeclaredField("lookupNames");
+            this.lookupNamesField = SimplePluginManager.class.getDeclaredField("lookupNames");
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        if (lookupNamesField == null) {
+        if (this.lookupNamesField == null) {
             Bukkit.getLogger().severe("Failed to add PlugMan to plugin list!\nNot a bukkit environment?");
             return;
         }
 
-        lookupNamesField.setAccessible(true);
+        this.lookupNamesField.setAccessible(true);
 
-        HashMap<String, Plugin> lookupNames = null;
         try {
-            lookupNames = (HashMap<String, Plugin>) lookupNamesField.get(Bukkit.getPluginManager());
+            System.out.println(this.lookupNamesField.get(Bukkit.getPluginManager()).getClass());
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+
+        Map lookupNames = null;
+        try {
+            lookupNames = (Map) this.lookupNamesField.get(Bukkit.getPluginManager());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -132,7 +193,16 @@ public class PlugMan extends JavaPlugin {
             return;
         }
 
+        lookupNames.remove("PlugMan");
         lookupNames.put("PlugMan", this);
+    }
+
+    @Override
+    public void onLoad() {
+        if (PlugMan.createdDummyPlugMan)
+            this.addPluginToList();
+
+        System.out.println(Bukkit.getPluginManager().getPlugin("PlugMan") == this);
     }
 
     @Override
