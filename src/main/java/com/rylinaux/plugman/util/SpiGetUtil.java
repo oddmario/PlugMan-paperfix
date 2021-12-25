@@ -74,42 +74,7 @@ public class SpiGetUtil {
      * @return the reflective UpdateResult.
      */
     public static UpdateResult checkUpToDate(String pluginName) {
-
-        long pluginId = SpiGetUtil.getPluginId(pluginName);
-
-        if (pluginId < 0) {
-            Plugin plugin = Bukkit.getPluginManager().getPlugin(pluginName);
-            if (plugin == null) {
-                return new UpdateResult(UpdateResult.ResultType.NOT_INSTALLED);
-            }
-            return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, plugin.getDescription().getVersion());
-        }
-
-        JSONArray versions = SpiGetUtil.getPluginVersions(pluginId);
-
-        if (versions == null || versions.size() == 0) {
-            Plugin plugin = Bukkit.getPluginManager().getPlugin(pluginName);
-            if (plugin == null) {
-                return new UpdateResult(UpdateResult.ResultType.NOT_INSTALLED);
-            }
-            return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, plugin.getDescription().getVersion());
-        }
-
-        JSONObject latest = (JSONObject) versions.get(0);
-
-        String currentVersion = PluginUtil.getPluginVersion(pluginName);
-        String latestVersion = (String) latest.get("name");
-
-        if (currentVersion == null) {
-            return new UpdateResult(UpdateResult.ResultType.NOT_INSTALLED, currentVersion, latestVersion);
-        } else if (latestVersion == null) {
-            return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, currentVersion, latestVersion);
-        } else if (currentVersion.equalsIgnoreCase(latestVersion)) {
-            return new UpdateResult(UpdateResult.ResultType.UP_TO_DATE, currentVersion, latestVersion);
-        } else {
-            return new UpdateResult(UpdateResult.ResultType.OUT_OF_DATE, currentVersion, latestVersion);
-        }
-
+        return checkUpToDate(pluginName, null);
     }
 
     /**
@@ -118,11 +83,21 @@ public class SpiGetUtil {
      * @param pluginName the plugin name.
      * @return the reflective UpdateResult.
      */
-    public static UpdateResult checkUpToDate(String pluginName, long pluginId) {
+    public static UpdateResult checkUpToDate(String pluginName, Long pluginId) {
+        boolean idSpecified = pluginId != null;
+
+        if (!idSpecified) {
+            pluginId = SpiGetUtil.getPluginId(pluginName);
+        }
+
         if (pluginId < 0) {
             Plugin plugin = Bukkit.getPluginManager().getPlugin(pluginName);
             if (plugin == null) {
-                return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, pluginName);
+                if (idSpecified) {
+                    return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, pluginName);
+                } else {
+                    return new UpdateResult(UpdateResult.ResultType.NOT_INSTALLED);
+                }
             }
             return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, plugin.getDescription().getVersion());
         }
@@ -132,7 +107,11 @@ public class SpiGetUtil {
         if (versions == null || versions.size() == 0) {
             Plugin plugin = Bukkit.getPluginManager().getPlugin(pluginName);
             if (plugin == null) {
-                return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, pluginName);
+                if (idSpecified) {
+                    return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, pluginName);
+                } else {
+                    return new UpdateResult(UpdateResult.ResultType.NOT_INSTALLED);
+                }
             }
             return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, plugin.getDescription().getVersion());
         }
