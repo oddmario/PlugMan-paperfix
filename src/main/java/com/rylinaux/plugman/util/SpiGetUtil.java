@@ -125,7 +125,10 @@ public class SpiGetUtil {
             return new UpdateResult(UpdateResult.ResultType.NOT_INSTALLED, currentVersion, latestVersion);
         } else if (latestVersion == null) {
             return new UpdateResult(UpdateResult.ResultType.INVALID_PLUGIN, currentVersion, latestVersion);
-        } else if (currentVersion.equalsIgnoreCase(latestVersion)) {
+        }
+
+        Boolean isActual = UpdateUtil.isActualVersion(currentVersion, latestVersion);
+        if (isActual != null && isActual) {
             return new UpdateResult(UpdateResult.ResultType.UP_TO_DATE, currentVersion, latestVersion);
         } else {
             return new UpdateResult(UpdateResult.ResultType.OUT_OF_DATE, currentVersion, latestVersion);
