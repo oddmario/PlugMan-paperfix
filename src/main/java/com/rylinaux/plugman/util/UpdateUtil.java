@@ -6,17 +6,11 @@ import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.json.simple.JSONArray;
 
-import java.util.Locale;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class UpdateUtil {
-
-    /**
-     * The base URL for the SpiGet API.
-     */
-    public static final String API_BASE_URL = "https://api.spiget.org/v2/";
-
     /**
      * Check which plugins are up-to-date or not.
      *
@@ -111,4 +105,49 @@ public class UpdateUtil {
         return jsonArray;
     }
 
+    private static final Pattern VERSION_FAMILY_NUMBERS_PATTERN = Pattern.compile("\\d+(\\.\\d+)*");
+
+    protected static Boolean isActualVersion(String current, String latest) {
+        if (current.equalsIgnoreCase(latest)) return true; // Strings are fully equals
+
+        List<List<Integer>> currentNumbers;
+        List<List<Integer>> latestNumbers;
+
+        try {
+            currentNumbers = parseNumbers(VERSION_FAMILY_NUMBERS_PATTERN.matcher(current));
+            latestNumbers = parseNumbers(VERSION_FAMILY_NUMBERS_PATTERN.matcher(latest));
+        } catch (NumberFormatException ex) {
+            return null; // Unable to parse numbers to int
+        }
+
+        for (int familyIndex = 0; familyIndex < CollectionUtil.maxCollectionsSize(currentNumbers, latestNumbers); familyIndex++) {
+            List<Integer> currentFamily = CollectionUtil.getElementOrDefault(currentNumbers, familyIndex, ArrayList::new);
+            List<Integer> latestFamily = CollectionUtil.getElementOrDefault(latestNumbers, familyIndex, ArrayList::new);
+
+            for (int numberIndex = 0; numberIndex < CollectionUtil.maxCollectionsSize(currentFamily, latestFamily); numberIndex++) {
+                int currentValue = CollectionUtil.getElementOrDefault(currentFamily, numberIndex, () -> 0);
+                int latestValue = CollectionUtil.getElementOrDefault(latestFamily, numberIndex, () -> 0);
+
+                if (latestValue > currentValue) {
+                    return false;
+                } else if (latestValue < currentValue) {
+                    return true;
+                }
+            }
+        }
+        return true; // Numbers amount equals, numbers values too
+    }
+
+    private static List<List<Integer>> parseNumbers(Matcher matcher) {
+        List<List<Integer>> result = new ArrayList<>();
+        while (matcher.find()) {
+            String familyString = matcher.group();
+            List<Integer> family = new ArrayList<>();
+            for (String number : familyString.split("\\.")) {
+                family.add(Integer.parseInt(number));
+            }
+            result.add(family);
+        }
+        return result;
+    }
 }
