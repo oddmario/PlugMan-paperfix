@@ -54,6 +54,10 @@ import java.util.stream.Collectors;
  */
 public class PluginUtil {
 
+    private static Field commandMapField;
+    private static Field knownCommandsField;
+    private static String nmsVersion = null;
+
     /**
      * Enable a plugin.
      *
@@ -67,7 +71,8 @@ public class PluginUtil {
      * Enable all plugins.
      */
     public static void enableAll() {
-        for (Plugin plugin : Bukkit.getPluginManager().getPlugins()) if (!isIgnored(plugin)) enable(plugin);
+        for (Plugin plugin : Bukkit.getPluginManager().getPlugins()) if (!PluginUtil.isIgnored(plugin))
+            PluginUtil.enable(plugin);
     }
 
     /**
@@ -83,7 +88,8 @@ public class PluginUtil {
      * Disable all plugins.
      */
     public static void disableAll() {
-        for (Plugin plugin : Bukkit.getPluginManager().getPlugins()) if (!isIgnored(plugin)) disable(plugin);
+        for (Plugin plugin : Bukkit.getPluginManager().getPlugins()) if (!PluginUtil.isIgnored(plugin))
+            PluginUtil.disable(plugin);
     }
 
     /**
@@ -93,7 +99,7 @@ public class PluginUtil {
      * @return the formatted name
      */
     public static String getFormattedName(Plugin plugin) {
-        return getFormattedName(plugin, false);
+        return PluginUtil.getFormattedName(plugin, false);
     }
 
     /**
@@ -118,7 +124,7 @@ public class PluginUtil {
      * @return the plugin
      */
     public static Plugin getPluginByName(String[] args, int start) {
-        return getPluginByName(StringUtil.consolidateStrings(args, start));
+        return PluginUtil.getPluginByName(StringUtil.consolidateStrings(args, start));
     }
 
     /**
@@ -158,7 +164,6 @@ public class PluginUtil {
         return plugins;
     }
 
-
     /**
      * Returns a List of enabled plugin names.
      *
@@ -179,7 +184,7 @@ public class PluginUtil {
      * @return the version.
      */
     public static String getPluginVersion(String name) {
-        Plugin plugin = getPluginByName(name);
+        Plugin plugin = PluginUtil.getPluginByName(name);
         if (plugin != null && plugin.getDescription() != null) return plugin.getDescription().getVersion();
         return null;
     }
@@ -191,7 +196,7 @@ public class PluginUtil {
      * @return the commands registered
      */
     public static String getUsages(Plugin plugin) {
-        List<String> parsedCommands = getKnownCommands().keySet().stream().filter(s -> s.toLowerCase().startsWith(plugin.getName().toLowerCase() + ":")).map(s -> s.substring(plugin.getName().length() + ":".length())).collect(Collectors.toList());
+        List<String> parsedCommands = PluginUtil.getKnownCommands().keySet().stream().filter(s -> s.toLowerCase().startsWith(plugin.getName().toLowerCase() + ":")).map(s -> s.substring(plugin.getName().length() + ":".length())).collect(Collectors.toList());
 
         if (parsedCommands.isEmpty())
             return "No commands registered.";
@@ -210,16 +215,12 @@ public class PluginUtil {
         List<String> plugins = new ArrayList<>();
 
         List<String> pls = new ArrayList<>();
-        for (String s : getKnownCommands().keySet()) {
-            if (s.contains(":")) {
-                if (!s.equalsIgnoreCase("minecraft:/")) {
-                    if (s.split(":")[1].equalsIgnoreCase(command)) {
-                        String substring = s.substring(0, s.lastIndexOf(":"));
-                        pls.add(substring);
-                    }
+        for (String s : PluginUtil.getKnownCommands().keySet())
+            if (s.contains(":"))
+                if (!s.equalsIgnoreCase("minecraft:/")) if (s.split(":")[1].equalsIgnoreCase(command)) {
+                    String substring = s.substring(0, s.lastIndexOf(":"));
+                    pls.add(substring);
                 }
-            }
-        }
 
         for (String plugin : pls) {
             Plugin pl = Bukkit.getPluginManager().getPlugin(plugin);
@@ -238,7 +239,7 @@ public class PluginUtil {
      * @return whether the plugin is ignored
      */
     public static boolean isIgnored(Plugin plugin) {
-        return isIgnored(plugin.getName());
+        return PluginUtil.isIgnored(plugin.getName());
     }
 
     /**
@@ -259,7 +260,7 @@ public class PluginUtil {
      * @return status message
      */
     private static String load(Plugin plugin) {
-        return load(plugin.getName());
+        return PluginUtil.load(plugin.getName());
     }
 
     /**
@@ -306,7 +307,7 @@ public class PluginUtil {
         if (!(PlugMan.getInstance().getBukkitCommandWrap() instanceof BukkitCommandWrap_Useless)) {
             Plugin finalTarget = target;
             Bukkit.getScheduler().runTaskLater(PlugMan.getInstance(), () -> {
-                Map<String, Command> knownCommands = getKnownCommands();
+                Map<String, Command> knownCommands = PluginUtil.getKnownCommands();
 
                 for (Map.Entry<String, Command> entry : knownCommands.entrySet().stream().filter(stringCommandEntry -> stringCommandEntry.getValue() instanceof PluginIdentifiableCommand).filter(stringCommandEntry -> {
                     PluginIdentifiableCommand command = (PluginIdentifiableCommand) stringCommandEntry.getValue();
@@ -316,6 +317,8 @@ public class PluginUtil {
                     Command command = entry.getValue();
                     PlugMan.getInstance().getBukkitCommandWrap().wrap(command, alias);
                 }
+
+                PlugMan.getInstance().getBukkitCommandWrap().sync();
 
                 if (Bukkit.getOnlinePlayers().size() >= 1)
                     for (Player player : Bukkit.getOnlinePlayers()) player.updateCommands();
@@ -328,29 +331,25 @@ public class PluginUtil {
 
     }
 
-
-    private static Field commandMapField;
-    private static Field knownCommandsField;
-
     public static Map<String, Command> getKnownCommands() {
-        if (commandMapField == null) try {
-            commandMapField = Class.forName("org.bukkit.craftbukkit." + getNmsVersion() + ".CraftServer").getDeclaredField("commandMap");
-            commandMapField.setAccessible(true);
+        if (PluginUtil.commandMapField == null) try {
+            PluginUtil.commandMapField = Class.forName("org.bukkit.craftbukkit." + PluginUtil.getNmsVersion() + ".CraftServer").getDeclaredField("commandMap");
+            PluginUtil.commandMapField.setAccessible(true);
         } catch (NoSuchFieldException | ClassNotFoundException e) {
             e.printStackTrace();
             return null;
         }
         SimpleCommandMap commandMap;
         try {
-            commandMap = (SimpleCommandMap) commandMapField.get(Bukkit.getServer());
+            commandMap = (SimpleCommandMap) PluginUtil.commandMapField.get(Bukkit.getServer());
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
 
-        if (knownCommandsField == null) try {
-            knownCommandsField = SimpleCommandMap.class.getDeclaredField("knownCommands");
-            knownCommandsField.setAccessible(true);
+        if (PluginUtil.knownCommandsField == null) try {
+            PluginUtil.knownCommandsField = SimpleCommandMap.class.getDeclaredField("knownCommands");
+            PluginUtil.knownCommandsField.setAccessible(true);
         } catch (NoSuchFieldException e) {
             e.printStackTrace();
             return null;
@@ -359,7 +358,7 @@ public class PluginUtil {
         Map<String, Command> knownCommands;
 
         try {
-            knownCommands = (Map<String, Command>) knownCommandsField.get(commandMap);
+            knownCommands = (Map<String, Command>) PluginUtil.knownCommandsField.get(commandMap);
         } catch (IllegalAccessException e) {
             e.printStackTrace();
             return null;
@@ -368,17 +367,14 @@ public class PluginUtil {
         return knownCommands;
     }
 
-
-    private static String nmsVersion = null;
-
     private static String getNmsVersion() {
-        if (nmsVersion == null) try {
-            nmsVersion = Bukkit.getServer().getClass().getPackage().getName().replace(".", ",").split(",")[3];
+        if (PluginUtil.nmsVersion == null) try {
+            PluginUtil.nmsVersion = Bukkit.getServer().getClass().getPackage().getName().replace(".", ",").split(",")[3];
         } catch (ArrayIndexOutOfBoundsException e) {
             e.printStackTrace();
-            nmsVersion = null;
+            PluginUtil.nmsVersion = null;
         }
-        return nmsVersion;
+        return PluginUtil.nmsVersion;
     }
 
 
@@ -389,8 +385,8 @@ public class PluginUtil {
      */
     public static void reload(Plugin plugin) {
         if (plugin != null) {
-            unload(plugin);
-            load(plugin);
+            PluginUtil.unload(plugin);
+            PluginUtil.load(plugin);
         }
     }
 
@@ -398,7 +394,8 @@ public class PluginUtil {
      * Reload all plugins.
      */
     public static void reloadAll() {
-        for (Plugin plugin : Bukkit.getPluginManager().getPlugins()) if (!isIgnored(plugin)) reload(plugin);
+        for (Plugin plugin : Bukkit.getPluginManager().getPlugins()) if (!PluginUtil.isIgnored(plugin))
+            PluginUtil.reload(plugin);
     }
 
     /**
@@ -410,7 +407,7 @@ public class PluginUtil {
     public static String unload(Plugin plugin) {
 
         if (!(PlugMan.getInstance().getBukkitCommandWrap() instanceof BukkitCommandWrap_Useless)) {
-            Map<String, Command> knownCommands = getKnownCommands();
+            Map<String, Command> knownCommands = PluginUtil.getKnownCommands();
 
             for (Map.Entry<String, Command> entry : knownCommands.entrySet().stream().filter(stringCommandEntry -> stringCommandEntry.getValue() instanceof PluginIdentifiableCommand).filter(stringCommandEntry -> {
                 PluginIdentifiableCommand command = (PluginIdentifiableCommand) stringCommandEntry.getValue();
@@ -419,6 +416,8 @@ public class PluginUtil {
                 String alias = entry.getKey();
                 PlugMan.getInstance().getBukkitCommandWrap().unwrap(alias);
             }
+
+            PlugMan.getInstance().getBukkitCommandWrap().sync();
 
             if (Bukkit.getOnlinePlayers().size() >= 1)
                 for (Player player : Bukkit.getOnlinePlayers()) player.updateCommands();

@@ -65,9 +65,7 @@ public class PlugMan extends JavaPlugin {
     static {
         try {
             PluginDescriptionFile.class.getDeclaredField("provides");
-            if (new File("plugins", "PlugManDummy.jar").exists()) {
-                new File("plugins", "PlugManDummy.jar").delete();
-            }
+            if (new File("plugins", "PlugManDummy.jar").exists()) new File("plugins", "PlugManDummy.jar").delete();
         } catch (NoSuchFieldError | NoSuchFieldException ignored) {
             if (!new File("plugins", "PlugManDummy.jar").exists())
                 System.out.println("'Legacy' server version detected, please restart the server in order to load Dummy PlugMan, please ignore all UnknownDependencyException messages about PlugMan if you did not restart.");
