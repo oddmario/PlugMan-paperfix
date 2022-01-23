@@ -110,7 +110,7 @@
                 <configuration>
                     <licenseName>mit</licenseName>
                     <licenseResolver>${project.baseUri}/license</licenseResolver>
-                    <organizationName>${artifactId}</organizationName>
+                    <organizationName>${project.artifactId}</organizationName>
                 </configuration>
                 <executions>
                     <execution>
