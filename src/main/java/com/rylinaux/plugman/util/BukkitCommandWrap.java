@@ -141,7 +141,9 @@ public class BukkitCommandWrap {
         } catch (IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
         }
+    }
 
+    public void sync() {
         if (this.syncCommandsMethod == null) try {
             this.syncCommandsMethod = Class.forName("org.bukkit.craftbukkit." + this.nmsVersion + ".CraftServer").getDeclaredMethod("syncCommands");
             this.syncCommandsMethod.setAccessible(true);
@@ -238,20 +240,6 @@ public class BukkitCommandWrap {
 
         try {
             this.removeCommandMethod.invoke(b.getRoot(), command);
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            e.printStackTrace();
-        }
-
-        if (this.syncCommandsMethod == null) try {
-            this.syncCommandsMethod = Class.forName("org.bukkit.craftbukkit." + this.nmsVersion + ".CraftServer").getDeclaredMethod("syncCommands");
-            this.syncCommandsMethod.setAccessible(true);
-        } catch (NoSuchMethodException | ClassNotFoundException e) {
-            e.printStackTrace();
-            return;
-        }
-
-        try {
-            this.syncCommandsMethod.invoke(Bukkit.getServer());
         } catch (IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
         }
