@@ -86,6 +86,7 @@ public class PlugMan extends JavaPlugin {
      * Stores all file names + plugin names for auto unload
      */
     private final HashMap<String, String> filePluginMap = new HashMap<>();
+    private boolean notifyOnBrokenCommandRemoval;
     private Field lookupNamesField = null;
     /**
      * The command manager which adds all command we want so 1.13+ players can instantly tab-complete them
@@ -152,6 +153,13 @@ public class PlugMan extends JavaPlugin {
      */
     public static PlugMan getInstance() {
         return PlugMan.instance;
+    }
+
+    /**
+     * @return = If PlugManX should notify if a broken command is removed
+     */
+    public boolean isNotifyOnBrokenCommandRemoval() {
+        return this.notifyOnBrokenCommandRemoval;
     }
 
     /**
@@ -284,6 +292,8 @@ public class PlugMan extends JavaPlugin {
             this.filePluginMap.put(file.getName(), descriptionFile.getName());
         }
 
+        this.notifyOnBrokenCommandRemoval = this.getConfig().getBoolean("notify-on-broken-command-removal", true);
+
         boolean alerted = false;
 
         if (this.getConfig().getBoolean("auto-load.enabled", false)) {
@@ -387,7 +397,7 @@ public class PlugMan extends JavaPlugin {
     private void initConfig() {
         this.saveDefaultConfig();
 
-        if (!this.getConfig().isSet("auto-load.enabled") || !this.getConfig().isSet("auto-unload.enabled") || !this.getConfig().isSet("auto-reload.enabled") || !this.getConfig().isSet("ignored-plugins")) {
+        if (!this.getConfig().isSet("auto-load.enabled") || !this.getConfig().isSet("auto-unload.enabled") || !this.getConfig().isSet("auto-reload.enabled") || !this.getConfig().isSet("ignored-plugins") || !this.getConfig().isSet("notify-on-broken-command-removal")) {
             Bukkit.getLogger().severe("Invalid PlugMan config detected! Creating new one...");
             new File("plugins" + File.separator + "PlugManX", "config.yml").renameTo(new File("plugins" + File.separator + "PlugManX", "config.yml.old-" + System.currentTimeMillis()));
             this.saveDefaultConfig();
@@ -395,6 +405,9 @@ public class PlugMan extends JavaPlugin {
         }
 
         this.ignoredPlugins = this.getConfig().getStringList("ignored-plugins");
+
+        this.ignoredPlugins.add("PlugMan");
+        this.ignoredPlugins.add("PlugManX");
 
         File resourcemapFile = new File(this.getDataFolder(), "resourcemaps.yml");
         if (!resourcemapFile.exists()) this.saveResource("resourcemaps.yml", true);

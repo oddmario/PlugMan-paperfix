@@ -3,7 +3,8 @@
 #
 # This takes the form of a comma separated list enclosed within the brackets.
 ###
-ignored-plugins: [PlugMan]
+ignored-plugins: [PlugMan,PlugManX,ViaVersion,ViaBackwards,ViaRewind,ProtocolSupport,ProtocolLib]
+notify-on-broken-command-removal: true
 auto-load:
   enabled: false
   check-every-seconds: 10
