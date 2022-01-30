@@ -52,12 +52,12 @@ public class PlugManAPI {
     }
 
     /**
-     * If you don't want your plugin to be reloaded, you can use this method to add it to the list of ignored plugins
+     * If you don't want your plugin to be un-/reloaded, you can use this method to add it to the list of ignored plugins
      *
      * @param plugin = The plugin that should be ignored
      * @return = Whether the method was executed successfully
      */
-    public static boolean iDoNotWantToBeReloaded(String plugin) {
+    public static boolean iDoNotWantToBeUnOrReloaded(String plugin) {
         if (PlugMan.getInstance() == null)
             return false;
 
