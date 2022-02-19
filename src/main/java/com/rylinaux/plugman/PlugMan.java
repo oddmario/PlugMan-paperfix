@@ -439,6 +439,23 @@ public class PlugMan extends JavaPlugin {
                 return true;
             }
         });
+
+        this.resourceMap.put("plugmanx", new Map.Entry<Long, Boolean>() {
+            @Override
+            public Long getKey() {
+                return 88135L;
+            }
+
+            @Override
+            public Boolean getValue() {
+                return true;
+            }
+
+            @Override
+            public Boolean setValue(Boolean value) {
+                return true;
+            }
+        });
     }
 
     /**
