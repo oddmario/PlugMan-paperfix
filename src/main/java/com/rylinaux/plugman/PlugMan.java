@@ -181,12 +181,6 @@ public class PlugMan extends JavaPlugin {
 
         this.lookupNamesField.setAccessible(true);
 
-        try {
-            System.out.println(this.lookupNamesField.get(Bukkit.getPluginManager()).getClass());
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
-
         Map lookupNames = null;
         try {
             lookupNames = (Map) this.lookupNamesField.get(Bukkit.getPluginManager());
@@ -226,19 +220,6 @@ public class PlugMan extends JavaPlugin {
 
         this.initConfig();
 
-        String version;
-        try {
-            version = Bukkit.getServer().getClass().getPackage().getName().replace(".", ",").split(",")[3].replace("_", ".");
-        } catch (ArrayIndexOutOfBoundsException e) {
-            e.printStackTrace();
-            return;
-        }
-
-        /*if (version.contains("1.17") || version.contains("1.16") || version.contains("1.15") || version.contains("1.14") || version.contains("1.13")) {
-            bukkitCommandWrap = new BukkitCommandWrap();
-        } else {
-            bukkitCommandWrap = new BukkitCommandWrap_Useless();
-        }*/
         try {
             Class.forName("com.mojang.brigadier.CommandDispatcher");
             this.bukkitCommandWrap = new BukkitCommandWrap();
