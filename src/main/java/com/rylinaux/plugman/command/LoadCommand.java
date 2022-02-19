@@ -12,10 +12,10 @@ package com.rylinaux.plugman.command;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -29,7 +29,6 @@ package com.rylinaux.plugman.command;
 import com.rylinaux.plugman.PlugMan;
 import com.rylinaux.plugman.util.PluginUtil;
 import com.rylinaux.plugman.util.StringUtil;
-
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
@@ -72,7 +71,7 @@ public class LoadCommand extends AbstractCommand {
      * @param sender the command sender
      */
     public LoadCommand(CommandSender sender) {
-        super(sender, NAME, DESCRIPTION, PERMISSION, SUB_PERMISSIONS, USAGE);
+        super(sender, LoadCommand.NAME, LoadCommand.DESCRIPTION, LoadCommand.PERMISSION, LoadCommand.SUB_PERMISSIONS, LoadCommand.USAGE);
     }
 
     /**
@@ -86,15 +85,22 @@ public class LoadCommand extends AbstractCommand {
     @Override
     public void execute(CommandSender sender, Command command, String label, String[] args) {
 
-        if (!hasPermission()) {
+        if (!this.hasPermission()) {
             sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("error.no-permission"));
             return;
         }
 
         if (args.length < 2) {
             sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("error.specify-plugin"));
-            sendUsage();
+            this.sendUsage();
             return;
+        }
+
+        for (int i = 1; i < args.length; i++) {
+            String arg = args[i];
+            while (arg.contains("../"))
+                arg = arg.replace("../", "");
+            args[i] = arg;
         }
 
         Plugin potential = PluginUtil.getPluginByName(args, 1);
