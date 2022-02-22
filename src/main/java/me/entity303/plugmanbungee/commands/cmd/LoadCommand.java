@@ -27,15 +27,12 @@ public class LoadCommand {
             return;
         }
 
-        String arg = args[0];
-        while (arg.contains("../"))
-            arg = arg.replace("../", "");
-        args[0] = arg;
+        String filename = args[0].replaceAll("[/\\\\]", "");
 
-        File file = new File("plugins", args[0] + ".jar");
+        File file = new File("plugins", filename + ".jar");
 
         if (!file.exists()) {
-            this.sendMessage(sender, "§cEs gibt keine Plugin-Datei mit dem Namen §4" + args[0] + "§c!");
+            this.sendMessage(sender, "§cEs gibt keine Plugin-Datei mit dem Namen §4" + filename + "§c!");
             return;
         }
 

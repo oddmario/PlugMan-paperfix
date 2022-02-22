@@ -97,10 +97,7 @@ public class LoadCommand extends AbstractCommand {
         }
 
         for (int i = 1; i < args.length; i++) {
-            String arg = args[i];
-            while (arg.contains("../"))
-                arg = arg.replace("../", "");
-            args[i] = arg;
+            args[i] = args[i].replaceAll("[/\\\\]", "");
         }
 
         Plugin potential = PluginUtil.getPluginByName(args, 1);
