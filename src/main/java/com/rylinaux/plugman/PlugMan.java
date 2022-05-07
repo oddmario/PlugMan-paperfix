@@ -201,8 +201,6 @@ public class PlugMan extends JavaPlugin {
     public void onLoad() {
         if (PlugMan.createdDummyPlugMan)
             this.addPluginToList();
-
-        System.out.println(Bukkit.getPluginManager().getPlugin("PlugMan") == this);
     }
 
     @Override
