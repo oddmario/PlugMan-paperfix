@@ -26,7 +26,6 @@ package com.rylinaux.plugman.util;
  * #L%
  */
 
-import com.google.common.base.Joiner;
 import com.rylinaux.plugman.PlugMan;
 import com.rylinaux.plugman.api.GentleUnload;
 import com.rylinaux.plugman.api.PlugManAPI;
@@ -34,11 +33,11 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.PluginCommand;
-import org.bukkit.command.PluginIdentifiableCommand;
 import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.plugin.*;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
@@ -59,6 +58,19 @@ public class PluginUtil {
     private static Field commandMapField;
     private static Field knownCommandsField;
     private static String nmsVersion = null;
+
+    private static final Class<?> pluginClassLoader;
+    private static final Field pluginClassLoaderPlugin;
+
+    static {
+        try {
+            pluginClassLoader = Class.forName("org.bukkit.plugin.java.PluginClassLoader");
+            pluginClassLoaderPlugin = pluginClassLoader.getDeclaredField("plugin");
+            pluginClassLoaderPlugin.setAccessible(true);
+        } catch (ClassNotFoundException | NoSuchFieldException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     /**
      * Enable a plugin.
@@ -200,12 +212,31 @@ public class PluginUtil {
      * @return the commands registered
      */
     public static String getUsages(Plugin plugin) {
-        List<String> parsedCommands = PluginUtil.getKnownCommands().keySet().stream().filter(s -> s.toLowerCase().startsWith(plugin.getName().toLowerCase() + ":")).map(s -> s.substring(plugin.getName().length() + ":".length())).collect(Collectors.toList());
+        Map<String, Command> knownCommands = PluginUtil.getKnownCommands();
+        String parsedCommands = knownCommands.entrySet().stream()
+                .filter(s -> {
+                    if (s.getKey().contains(":")) {
+                        return s.getKey().split(":")[0].equalsIgnoreCase(plugin.getName());
+                    } else {
+                        ClassLoader cl = s.getValue().getClass().getClassLoader();
+                        try {
+                            return cl.getClass() == pluginClassLoader && pluginClassLoaderPlugin.get(cl) == plugin;
+                        } catch (IllegalAccessException e) {
+                            return false;
+                        }
+                    }
+                })
+                .map(s -> {
+                    String[] parts = s.getKey().split(":");
+                    // parts length equals 1 means that the key is the command
+                    return parts.length == 1 ? parts[0] : parts[1];
+                })
+                .collect(Collectors.joining(", "));
 
         if (parsedCommands.isEmpty())
             return "No commands registered.";
 
-        return Joiner.on(", ").join(parsedCommands);
+        return parsedCommands;
 
     }
 
@@ -219,17 +250,22 @@ public class PluginUtil {
         List<String> plugins = new ArrayList<>();
 
         List<String> pls = new ArrayList<>();
-        for (String s : PluginUtil.getKnownCommands().keySet())
-            if (s.contains(":"))
-                if (!s.equalsIgnoreCase("minecraft:/")) if (s.split(":")[1].equalsIgnoreCase(command)) {
-                    String substring = s.substring(0, s.lastIndexOf(":"));
-                    pls.add(substring);
+        for (Map.Entry<String, Command> s : PluginUtil.getKnownCommands().entrySet()) {
+            ClassLoader cl = s.getValue().getClass().getClassLoader();
+            if (cl.getClass() != pluginClassLoader) {
+                String[] parts = s.getKey().split(":");
+                if(parts.length == 2 && parts[1].equalsIgnoreCase(command)) {
+                    Plugin plugin = Bukkit.getPluginManager().getPlugin(parts[0]);
+                    if(plugin != null) pls.add(plugin.getName());
                 }
+                continue;
+            }
 
-        for (String plugin : pls) {
-            Plugin pl = Bukkit.getPluginManager().getPlugin(plugin);
-            if (pl != null) plugins.add(pl.getName());
-            else plugins.add(plugin);
+            try {
+                JavaPlugin plugin = (JavaPlugin) pluginClassLoaderPlugin.get(cl);
+                pls.add(plugin.getName());
+            } catch (IllegalAccessException ignored) {
+            }
         }
 
         return plugins;
@@ -312,11 +348,22 @@ public class PluginUtil {
             Plugin finalTarget = target;
             Bukkit.getScheduler().runTaskLater(PlugMan.getInstance(), () -> {
                 Map<String, Command> knownCommands = PluginUtil.getKnownCommands();
+                List<Map.Entry<String, Command>> commands = knownCommands.entrySet().stream()
+                        .filter(s -> {
+                            if (s.getKey().contains(":")) {
+                                return s.getKey().split(":")[0].equalsIgnoreCase(finalTarget.getName());
+                            } else {
+                                ClassLoader cl = s.getValue().getClass().getClassLoader();
+                                try {
+                                    return cl.getClass() == pluginClassLoader && pluginClassLoaderPlugin.get(cl) == finalTarget;
+                                } catch (IllegalAccessException e) {
+                                    return false;
+                                }
+                            }
+                        })
+                        .collect(Collectors.toList());
 
-                for (Map.Entry<String, Command> entry : knownCommands.entrySet().stream().filter(stringCommandEntry -> stringCommandEntry.getValue() instanceof PluginIdentifiableCommand).filter(stringCommandEntry -> {
-                    PluginIdentifiableCommand command = (PluginIdentifiableCommand) stringCommandEntry.getValue();
-                    return command.getPlugin().getName().equalsIgnoreCase(finalTarget.getName());
-                }).collect(Collectors.toList())) {
+                for (Map.Entry<String, Command> entry : commands) {
                     String alias = entry.getKey();
                     Command command = entry.getValue();
                     PlugMan.getInstance().getBukkitCommandWrap().wrap(command, alias);
@@ -415,11 +462,22 @@ public class PluginUtil {
         if (!PlugManAPI.getGentleUnloads().containsKey(plugin)) {
             if (!(PlugMan.getInstance().getBukkitCommandWrap() instanceof BukkitCommandWrap_Useless)) {
                 Map<String, Command> knownCommands = PluginUtil.getKnownCommands();
+                List<Map.Entry<String, Command>> commands = knownCommands.entrySet().stream()
+                        .filter(s -> {
+                            if (s.getKey().contains(":")) {
+                                return s.getKey().split(":")[0].equalsIgnoreCase(plugin.getName());
+                            } else {
+                                ClassLoader cl = s.getValue().getClass().getClassLoader();
+                                try {
+                                    return cl.getClass() == pluginClassLoader && pluginClassLoaderPlugin.get(cl) == plugin;
+                                } catch (IllegalAccessException e) {
+                                    return false;
+                                }
+                            }
+                        })
+                        .collect(Collectors.toList());
 
-                for (Map.Entry<String, Command> entry : knownCommands.entrySet().stream().filter(stringCommandEntry -> stringCommandEntry.getValue() instanceof PluginIdentifiableCommand).filter(stringCommandEntry -> {
-                    PluginIdentifiableCommand command = (PluginIdentifiableCommand) stringCommandEntry.getValue();
-                    return command.getPlugin().getName().equalsIgnoreCase(plugin.getName());
-                }).collect(Collectors.toList())) {
+                for (Map.Entry<String, Command> entry : commands) {
                     String alias = entry.getKey();
                     PlugMan.getInstance().getBukkitCommandWrap().unwrap(alias);
                 }
