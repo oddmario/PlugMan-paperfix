@@ -2,11 +2,13 @@ package com.rylinaux.plugman.command;
 
 import com.rylinaux.plugman.PlugMan;
 import com.rylinaux.plugman.util.PluginUtil;
+import org.apache.commons.lang.math.NumberUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 /*
@@ -55,7 +57,7 @@ public class DownloadCommand extends AbstractCommand {
     /**
      * The proper usage of the command.
      */
-    public static final String USAGE = "/plugman download <URL>";
+    public static final String USAGE = "/plugman download <direct|spigot> <ID|URL>";
 
     /**
      * The sub permissions of the command.
@@ -87,15 +89,48 @@ public class DownloadCommand extends AbstractCommand {
             return;
         }
 
-        if (args.length < 2 || !args[1].startsWith("http://") && !args[1].startsWith("https://")) {
-            sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("error.invalid-url"));
-            sendUsage();
-            return;
+        URL url;
+        switch (args.length < 2 ? "" : args[1]) {
+            case "spigot":
+                if (args.length < 3 || !NumberUtils.isNumber(args[2])) {
+                    sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("download.invalid-id"));
+                    sendUsage();
+                    return;
+                }
+
+                try {
+                    url = new URL("https://api.spiget.org/v2/resources/" + args[2] + "/download");
+                } catch (MalformedURLException e) {
+                    sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("download.invalid-id"));
+                    sendUsage();
+                    return;
+                }
+
+                break;
+            case "direct":
+                if (args.length < 3 || !args[2].startsWith("http://") && !args[2].startsWith("https://")) {
+                    sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("download.invalid-url"));
+                    sendUsage();
+                    return;
+                }
+
+                try {
+                    url = new URL(args[2]);
+                } catch (MalformedURLException e) {
+                    sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("download.malformed-url"));
+                    sendUsage();
+                    return;
+                }
+
+                break;
+            default:
+                sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("download.invalid-type"));
+                sendUsage();
+                return;
         }
 
         File file;
         try {
-            URL url = new URL(args[1]);
             file = PluginUtil.download(url);
         } catch (IOException e) {
             e.printStackTrace();
