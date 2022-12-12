@@ -29,11 +29,14 @@ package com.rylinaux.plugman.util;
 import com.rylinaux.plugman.PlugMan;
 import com.rylinaux.plugman.api.GentleUnload;
 import com.rylinaux.plugman.api.PlugManAPI;
+import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.SimpleCommandMap;
+import org.bukkit.configuration.InvalidConfigurationException;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.plugin.*;
@@ -41,12 +44,17 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.Field;
+import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 /**
  * Utilities for managing plugins.
@@ -69,6 +77,50 @@ public class PluginUtil {
             pluginClassLoaderPlugin.setAccessible(true);
         } catch (ClassNotFoundException | NoSuchFieldException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Download a plugin from a URL.
+     *
+     * @param url the URL to download from
+     * @return downloaded plugin
+     * @throws IOException if an error occurs
+     */
+    public static File download(URL url) throws IOException {
+        File tmp = File.createTempFile("plugman", ".jar");
+        try {
+            // download the plugin from the specified URL
+            FileUtils.copyURLToFile(url, tmp);
+
+            // extract the plugin name and version from the plugin.yml
+            ZipFile zipFile = new ZipFile(tmp);
+            ZipEntry entry = zipFile.getEntry("plugin.yml");
+            if (entry == null) throw new IOException("No plugin.yml found in the jar.");
+
+            YamlConfiguration conf = new YamlConfiguration();
+            try {
+                conf.load(new InputStreamReader(zipFile.getInputStream(entry), StandardCharsets.UTF_8));
+            } catch (InvalidConfigurationException e) {
+                throw new IOException("Invalid plugin.yml", e);
+            }
+
+            String name = conf.getString("name");
+            String version = conf.getString("version");
+            if (name == null) throw new IOException("Could not find name in plugin.yml");
+            if (version == null) throw new IOException("Could not find version in plugin.yml");
+
+            // move the temp file to the plugins folder
+            File pluginPath = new File("./plugins/" + name + "-" + version + ".jar");
+            if (pluginPath.exists()) throw new IOException("Plugin already exists");
+
+            FileUtils.copyFile(tmp, pluginPath);
+            return pluginPath;
+        } finally {
+            if (!tmp.delete() && tmp.exists()) {
+                Logger.getLogger(PluginUtil.class.getName()).severe("Could not delete temp file " + tmp.getAbsolutePath());
+                tmp.deleteOnExit();
+            }
         }
     }
 
@@ -254,9 +306,9 @@ public class PluginUtil {
             ClassLoader cl = s.getValue().getClass().getClassLoader();
             if (cl.getClass() != pluginClassLoader) {
                 String[] parts = s.getKey().split(":");
-                if(parts.length == 2 && parts[1].equalsIgnoreCase(command)) {
+                if (parts.length == 2 && parts[1].equalsIgnoreCase(command)) {
                     Plugin plugin = Bukkit.getPluginManager().getPlugin(parts[0]);
-                    if(plugin != null) pls.add(plugin.getName());
+                    if (plugin != null) pls.add(plugin.getName());
                 }
                 continue;
             }
