@@ -30,6 +30,7 @@ PlugMan is a simple, easy to use plugin that lets server admins manage plugins f
 | /plugman disable [plugin&#124;all] | Disable a plugin. |
 | /plugman restart [plugin&#124;all] | Restart (disable/enable) a plugin. |
 | /plugman load [plugin] | Load a plugin. |
+| /plugman download [direct&#124;spigot] [ID&#124;URL] | Download and load a plugin. |
 | /plugman reload [plugin&#124;all] | Reload (unload/load) a plugin. |
 | /plugman unload [plugin] | Unload a plugin. |
 | /plugman check [plugin&#124;all] [-f] | Check if a plugin is up-to-date. |
@@ -52,6 +53,7 @@ PlugMan is a simple, easy to use plugin that lets server admins manage plugins f
 | plugman.restart | OP | Allow use of the restart command. |
 | plugman.restart.all | OP | Allow use of the restart all command. |
 | plugman.load | OP | Allow use of the load command. |
+| plugman.download | OP | Allow use of the download command. |
 | plugman.reload | OP | Allow use of the reload command. |
 | plugman.reload.all | OP | Allow use of the reload all command. |
 | plugman.unload | OP | Allow use of the unload command. |
